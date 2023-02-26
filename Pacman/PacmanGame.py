@@ -6,8 +6,11 @@ import os
 from Board import C_Board
 from Tile import C_Tile
 from Pacman import C_Pacman
-# from Blinky import C_Blinky
+from Node import C_Node
+from Blinky import C_Blinky
 from Path import C_Path
+import time
+import copy
 
 
 # Pacman pacman;
@@ -41,7 +44,6 @@ def setup():
   # Initializing class variables  -----------------------------------------------------------------------------------
   board = C_Board(0)          # Change the nu6mber to select different maps
   board.size(len(board.map[0]), len(board.map))
-
   tile = [[C_Tile() for _ in range(board.width)] for _ in range(board.height)]
   pixel_x, pixel_y = X/board.width, Y/board.height
 
@@ -63,11 +65,27 @@ def setup():
           print("SWITCH ERROR")
           break
 
+  # wallCount = 0
+  # dotCount = 0
+  # for i in range(board.height):
+  #   for j in range(board.width):
+  #     if tile[i][j].wall:
+  #       wallCount += 1
+  #     if tile[i][j].dot:
+  #       dotCount += 1
+  # print("Wall Count: ", wallCount)      
+  # print("Dot Count: ", dotCount)      
+  # print("Total Count: ", board.height*board.width)
+  # print(tile)
+
   # -----------------------------------------------------------------------------------------------------------------
 
   player = C_Pacman()
+  blinky = C_Blinky(tile, player)
+
+  ghost = [blinky]
   making_board(tile, board, SCREEN)
-  main(tile, board, SCREEN, player, background)
+  main(tile, board, SCREEN, player, ghost, background)
 
 # Displaying dots
 def making_board(tile, board, SCREEN):    
@@ -76,129 +94,98 @@ def making_board(tile, board, SCREEN):
       tile[i][j].show(SCREEN)
 
 # To Display Ghost and Pacman
-def show(tile, board, SCREEN, player, ghost):
+def show(SCREEN, player, ghost):
   player.show(SCREEN)
-  pass
+  ghost[0].show(SCREEN)
+  
+def playerMove(player, vel, ghost, tile):
+  # player.move(vel, ghost, tile)
+  ghost[0].move(player, tile)
 
 # returns the shortest path from the start node to the finish node
 def AStar(start, finish, vel):   #### np.array type
-  big = np.array([[]])   # stores all paths
+
+  print(start)
+
+  big = []   # stores C_Path  
   extend = C_Path()  # temp Path which is to be extended by adding another node
   winningPath = C_Path()  # final path
   extended = C_Path()  # extended path
-  sorting = np.array([[]])   # used for sorting paths by their distance to the target (use inbuild sort)
+  sorting = []   # used for sorting paths by their distance to the target (use inbuild sort)        stores C_Path 
 
   extend.addToTail(start, finish)
-  big = np.append(big, extend, axis= 0)
+  extend.velAtLast = np.array([vel[0], vel[1]])
+  big.append(extend)
 
-  # LinkedList<Path> big = new LinkedList<Path>();//stores all paths
-  # Path extend = new Path(); //a temp Path which is to be extended by adding another node
-  # Path winningPath = new Path();  //the final path
-  # Path extended = new Path(); //the extended path
-  # LinkedList<Path> sorting = new LinkedList<Path>();///used for sorting paths by their distance to the target
+  winner = False
 
-  # //startin off with big storing a path with only the starting node
-  # extend.addToTail(start, finish);
-  # big.add(extend);
+  negative_one = -1
 
 
-  # boolean winner = false;//has a path from start to finish been found  
-
-  # while (true) //repeat the process until ideal path is found or there is not path found 
-  # {
-  #   extend = big.pop();//grab the front path form the big to be extended
-  #   if (extend.path.getLast().equals(finish)) //if goal found
-  #   {
-  #     if (!winner) //if first goal found, set winning path
-  #     {
-  #       winner = true;
-  #       winningPath = extend.clone();
-  #     } else { //if current path found the goal in a shorter distance than the previous winner 
-  #       if (winningPath.distance > extend.distance)
-  #       {
-  #         winningPath = extend.clone();//set this path as the winning path
-  #       }
-  #     }
-  #     if (big.isEmpty()) //if this extend is the last path then return the winning path
-  #     {
-  #       return winningPath.clone();
-  #     } else {//if not the current extend is useless to us as it cannot be extended since its finished
-  #       extend = big.pop();//so get the next path
-  #     }
-  #   } 
-
-
-  #   //if the final node in the path has already been checked and the distance to it was shorter than this path has taken to get there than this path is no good
-  #   if (!extend.path.getLast().checked || extend.distance < extend.path.getLast().smallestDistToPoint)
-  #   {     
-  #     if (!winner || extend.distance + dist(extend.path.getLast().x, extend.path.getLast().y, finish.x, finish.y)  < winningPath.distance) //dont look at paths that are longer than a path which has already reached the goal
-  #     {
-
-  #       //if this is the first path to reach this node or the shortest path to reach this node then set the smallest distance to this point to the distance of this path
-  #       extend.path.getLast().smallestDistToPoint = extend.distance;
+  while True:
+    # print(time.time())
+    extend = big.pop()
+    if extend.path[-1].makeList() == finish.makeList():
+      if not winner:
+          winner = True
+          winningPath = extend.clone()        # extend has Path object
+      else:
+        if winningPath.distance > extend.distance:
+          winningPath = extend.clone()
+      if not big:
+        return winningPath.clone()
+      else:
+        extend = big.pop()
         
-  #       //move all paths to sorting form big then add the new paths (in the for loop)and sort them back into big.
-  #       sorting = (LinkedList)big.clone();
-  #       Node tempN = new Node(0, 0);//reset temp node
-  #       if (extend.path.size() >1) {
-  #         tempN = extend.path.get(extend.path.size() -2);//set the temp node to be the second last node in the path
-  #       }
+    
+    if (not extend.path[-1].checked) or (extend.distance < extend.path[-1].smallestDistToPoint):
+      if (not winner) or (extend.distance + math.dist([extend.path[-1].x, extend.path[-1].y], [finish.x, finish.y]) < winningPath.distance):
+        extend.path[-1].smallestDistToPoint = copy.deepcopy(extend.distance)
 
-  #       for (int i =0; i< extend.path.getLast().edges.size(); i++) //for each node incident (connected) to the final node of the path to be extended 
-  #       {
-  #         if (tempN != extend.path.getLast().edges.get(i))//if not going backwards i.e. the new node is not the previous node behind it 
-  #         {     
-     
-  #           //if the direction to the new node is in the opposite to the way the path was heading then dont count this path
-  #           PVector directionToNode = new PVector( extend.path.getLast().edges.get(i).x -extend.path.getLast().x, extend.path.getLast().edges.get(i).y - extend.path.getLast().y );
-  #           directionToNode.limit(vel.mag());
-  #           if (directionToNode.x == -1* extend.velAtLast.x && directionToNode.y == -1* extend.velAtLast.y ) {
-  #           } else {//if not turning around
-  #             extended = extend.clone();
-  #             extended.addToTail(extend.path.getLast().edges.get(i), finish);
-  #             extended.velAtLast = new PVector(directionToNode.x, directionToNode.y);
-  #             sorting.add(extended.clone());//add this extended list to the list of paths to be sorted
-  #           }
-  #         }
-  #       }
+        sorting = copy.deepcopy(big)
+        tempN = C_Node()
+        if len(extend.path) > 1:
+          tempN = extend.path[-2]
+        
+
+        for i in range(len(extend.path[-1].edges)):
+          
+          if tempN.makeList() != extend.path[-1].edges[i].makeList():       # Comparing C_Node, dunno if this works or what
+
+            directionToNode = np.array([extend.path[-1].edges[i].x - extend.path[-1].x, extend.path[-1].edges[i].y - extend.path[-1].y])
+            magnitude = np.sqrt(vel.dot(vel))             # directionToNode.limit(vel.mag());
+            directionToNode = directionToNode//magnitude
+            if (directionToNode[0] == -1*extend.velAtLast[0]) and (directionToNode[1] == -1*extend.velAtLast[1]):
+              pass  # turning around
+            else:
+              extended = copy.deepcopy(extend)
+              extended.addToTail(extend.path[-1].edges[i], finish)
+              extended.velAtLast = np.array([directionToNode[0], directionToNode[1]])
+              sorting.append(copy.deepcopy(extended))
 
 
-  #       //sorting now contains all the paths form big plus the new paths which where extended
-  #       //adding the path which has the higest distance to big first so that its at the back of big.
-  #       //using selection sort i.e. the easiest and worst sorting algorithm
-  #       big.clear();
-  #       while (!sorting.isEmpty())
-  #       {
-  #         float max = -1;
-  #         int iMax = 0;
-  #         for (int i = 0; i < sorting.size(); i++)
-  #         {
-  #           if (max < sorting.get(i).distance + sorting.get(i).distToFinish)//A* uses the distance from the goal plus the paths length to determine the sorting order
-  #           {
-  #             iMax = i;
-  #             max = sorting.get(i).distance + sorting.get(i).distToFinish;
-  #           }
-  #         }
-  #         big.addFirst(sorting.remove(iMax).clone());//add it to the front so that the ones with the greatest distance end up at the back
-  #         //and the closest ones end up at the front
-  #       }
-  #     }
-  #     extend.path.getLast().checked = true;
-  #   }
-  #   //if no more paths avaliable
-  #   if (big.isEmpty()) {
-  #     if (winner ==false) //there is not path from start to finish
-  #     {
-  #       print("FUCK!!!!!!!!!!");//error message 
-  #       return null;
-  #     } else {//if winner is found then the shortest winner is stored in winning path so return that
-  #       return winningPath.clone();
-  #     }
-  #   }
-  # }
-  
-# Main game function loop
-def main(tile, board, SCREEN, player, background):
+        big.clear()
+        while sorting:
+          max = -1
+          iMax = 0
+          for i in range(len(sorting)):
+            if max < (sorting[i].distance + sorting[i].distToFinish):
+              iMax = i
+              max = sorting[i].distance + sorting[i].distToFinish
+          big.insert(0, sorting.pop(iMax))        #clone is used here
+
+      extend.path[-1].checked = True
+
+    # print(big)
+    if not big:
+      if winner == False:
+        print("ERROR MESSAGE")
+        return None
+      else:
+        return winningPath.clone() 
+      
+      
+def main(tile, board, SCREEN, player, ghost, background):
     FPS = 60
     fpsClock = pygame.time.Clock()
     STATUS = True
@@ -219,12 +206,15 @@ def main(tile, board, SCREEN, player, background):
 
 
         making_board(tile, board, SCREEN)
-        show(tile, board, SCREEN, player, 0)
-        player.move()       #### Need value
-
+        show(SCREEN, player, ghost)
+        vel = np.array([0,0])
+        playerMove(player, vel, ghost, tile)       #### Need value 
+        
         # pygame.display.update()
         pygame.display.flip()
         fpsClock.tick(FPS)
+
+        print(time.time()) 
 
 # Main game start
 if __name__ == "__main__":
@@ -242,7 +232,7 @@ if __name__ == "__main__":
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Pinky pinky;
-# Blinky blinky;
+# 
 # Clyde clyde;
 # Inky inky;
 

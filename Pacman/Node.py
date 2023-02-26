@@ -4,24 +4,29 @@ class C_Node:
 
   # edges = {'Up': None, 'Down': None, 'Left': None, 'Right': None}
   # edges = np.array([[]])
-  edges = []
-  x = 0.0
-  y = 0.0
-  smallestDistToPointy = 10000000
-  degree = 0
-  value = 0
-  checked = False
+  # edges = []
+  # x = 0.0
+  # y = 0.0
+  # smallestDistToPoint = 10000000
+  # degree = 0
+  # value = 0
+  # checked = False
 
-  def __init__(self, x1, y1):
+  def __init__(self, x1=0.0, y1=0.0):
     self.x = x1
     self.y = y1
+    self.edges = []
+    self.smallestDistToPoint = 10000000
+    self.degree = 0
+    self.value = 0
+    self.checked = False
   
   def show(self):
     pass
   
-  def addEdges(self, nodes, tile):
-    for i in len(nodes):
-      if nodes[i].y == self.y or nodes[i].x == self.x:
+  def addEdges(self, nodes, tile):      # nodes is list of C_Node type
+    for i in range(len(nodes)):
+      if (nodes[i].y == self.y) ^ (nodes[i].x == self.x):
         if nodes[i].y == self.y:
           mostLeft = min(nodes[i].x, self.x) +1
           maxLeft = max(nodes[i].x, self.x)
@@ -32,7 +37,6 @@ class C_Node:
               break
             mostLeft += 1
           if edge:
-            # self.edges = np.append(self.edges, nodes[i], axis= 0)
             self.edges.append(nodes[i])
 
         elif nodes[i].x == self.x:
@@ -45,8 +49,10 @@ class C_Node:
               break
             mostUp += 1
           if edge:
-            # self.edges = np.append(self.edges, nodes[i], axis= 0)
             self.edges.append(nodes[i])
+
+  def makeList(self):           # This is so we can compare two C_Node objects by returning their value in a list
+    return [self.edges, self.x, self.y, self.smallestDistToPoint, self.degree, self.value, self.checked]
 
 """# -------------------------------------------------------------------------------------------
 class C_Linked_List(C_Node):

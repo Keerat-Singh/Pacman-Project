@@ -1,4 +1,6 @@
 import pygame
+import math
+import time
 import numpy as np
 
 class C_Pacman:
@@ -16,29 +18,73 @@ class C_Pacman:
     self.pos = np.array([13*16 + 8, 23*16 + 8])
 
   def show(self, SCREEN):
-    pygame.draw.circle(SCREEN, (255,255,0), (self.pos[0], self.pos[1]), 8)
+    pygame.draw.circle(SCREEN, (255,255,0), (self.pos[0], self.pos[1]), 10)
 
-  def move(self, vel):
-    if self.checkPosition(self):
+  def move(self, vel, ghost, tile):
+    if self.checkPosition(vel, ghost, tile):
+      print("After check call passing: ",vel)
       self.pos += vel
-    # if (self.checkPosition(vel)):
-    #   self.pos += vel
 
-  def checkPosition(self):
-    
+  def checkPosition(self, vel, ghost, tile):
+
     if (((self.pos[0] - 8)%16 == 0) and ((self.pos[1] - 8) %16 == 0)):
 
-      self.matrixPosition = np.array([((self.pos[0] - 8)/16), ((self.pos[1] - 8)/16)])
+      matrixPosition = np.array([((self.pos[0] - 8)/16), ((self.pos[1] - 8)/16)])
 
-      # reset all the paths for all the ghosts  
-      # blinky.setPath();
-      # pinky.setPath();
-      # clyde.setPath();
-      # inky.setPath(); 
+      ghost[0].setPath(tile, self)
 
+#       //reset all the paths for all the ghosts  
+#       blinky.setPath();
+#       pinky.setPath();
+#       clyde.setPath();
+#       inky.setPath(); 
       
-    return True
+      if not tile[math.floor(matrixPosition[1])][math.floor(matrixPosition[0])].eaten:
+        tile[math.floor(matrixPosition[1])][math.floor(matrixPosition[0])].eaten = True
+        self.score += 1
+        if tile[math.floor(matrixPosition[1])][math.floor(matrixPosition[0])].bigDot:
+          ghost[0].frightened = True
+          ghost[0].flashCount = 0
+      
+        positionToCheck = np.array([matrixPosition[0] + self.turnTo[0], matrixPosition[1]+self.turnTo[1]])
+
+      if tile[math.floor(positionToCheck[1])][math.floor(positionToCheck[0])].wall:
+        if tile[math.floor(positionToCheck[1]) + vel[1]][math.floor(positionToCheck[0]) + vel[0]].wall:
+          return False
+        else:
+          return True
+      else:
+        vel = np.array([self.turnTo[0], self.turnTo[1]])
+        print("Before passing: ",vel)
+        return True
+
+    else:
+      if ((self.pos[0] + 10*vel[0] -8)%16 == 0) and ((self.pos[1] + 10*vel[1] -8)%16 == 0):       # if 10 places off a critical position in the direction that pacman is moving
+        matrixPosition = np.array([((self.pos[0] + 10*vel[0] -8)/16), ((self.pos[1] + 10*vel[1] -8)/16)])
+        if not tile[math.floor(matrixPosition[1])][math.floor(matrixPosition[0])].eaten:
+          tile[math.floor(matrixPosition[1])][math.floor(matrixPosition[0])].eaten = True
+          self.score += 1
+          print("Score: ", self.score)
+          if tile[math.floor(matrixPosition[1])][math.floor(matrixPosition[0])].bigDot:
+            ghost[0].frightened = True
+            ghost[0].flashCount = 0
+
+      if (self.turnTo[0] + vel[0] == 0) and (self.turnTo[1] + vel[1] == 0):
+        vel = np.array([self.turnTo[0], self.turnTo[1]])
+        return True
+      
+      return True
+      
   
+  def hitPacman(self, ghost):
+    # Individual hitPacman check on each ghost class
+    return False           
+
+  def kill(self):
+    pass
+
+
+
 # class Pacman {
 #   PVector pos;
 #   PVector vel = new PVector(-1, 0);

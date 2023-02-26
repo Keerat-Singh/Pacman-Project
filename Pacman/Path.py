@@ -1,12 +1,13 @@
 import numpy as np
+from Node import C_Node
 import math
 
 class C_Path:
   
-  path = []
-  distance = 0
-  distToFinish = 0
-  velAtLast = np.array([0,0])
+  # path = []     # C_Nodes
+  # distance = 0
+  # distToFinish = 0
+  # velAtLast = np.array([0,0])
 
   def __init__(self):
     self.path = []
@@ -14,14 +15,14 @@ class C_Path:
     self.distToFinish = 0
     self.velAtLast = np.array([0,0])
 
-  def addToTail(self, n, endNode):        # n and endNode are list type | np.array
-    if len(self.path) == 0:     ## might need to change
+  def addToTail(self, n, endNode):        # n and endNode are C_Node() type 
+    if len(self.path) != 0:    
       self.distance += math.dist([self.path[-1].x, self.path[-1].y], [n.x, n.y])
     # self.path = np.append(self.path, n, axis= 0)
     self.path.append(n)
     self.distToFinish = math.dist([self.path[-1].x, self.path[-1].y], [endNode.x, endNode.y])
 
-  # Return a clone
+  # Return a clone; This might be for drawing line
   def clone(self):
     temp = C_Path()
     temp.path = self.path
@@ -32,11 +33,14 @@ class C_Path:
 
   # Removes all nodes
   def remove(self):
-    self.path = []
+    self.path = [C_Node()]
     self.distance = 0
     self.distToFinish = 0
 
+  def show(self):
+    pass
 
+  
 # class Path {
 #   LinkedList<Node> path = new LinkedList<Node>();//a list of nodes 
 #   float distance = 0;//length of path

@@ -1,20 +1,21 @@
 import numpy as np
-from Node import C_Linked_List
+import math
+import pygame
+from Node import C_Node
+from Path import C_Path
 
 class C_Blinky:
 
-  pos = np.array([0,0])
-  vel = np.array([0,0])
-
-  # Path type object
-
-  ghostNodes = np.array([0,0])
-  start = np.array([0,0])   # Might need this as global
-  end = np.array([0,0])     # Might need this as global
+  pos = np.array([13*16 +8, 11*16 +8])
+  vel = np.array([1,0])
+  bestPath = C_Path()
+  ghostNodes = []     # list of Nodes
+  start = C_Node()   
+  end = C_Node()     
   color = (255,0,0)
 
   chase = True
-  fightened = False
+  frightened = False
   flashCount = 0
   chaseCount = 0
   returnHome = False
@@ -22,32 +23,172 @@ class C_Blinky:
   deadCount = 0
 
 
-  def __init__(self):
+  def __init__(self, tile, pacman):
+    print("IS THIS CALLED?")
     self.pos = np.array([13*16 +8, 11*16 +8])
     self.vel = np.array([1, 0])
-    self.setPath()
+    self.setPath(tile, pacman)
+    self.ghostNodes = []     # list of Nodes
+    self.start = C_Node()   
+    self.end = C_Node()     
+    self.color = (255,0,0)
 
+    self.chase = True
+    self.frightened = False
+    self.flashCount = 0
+    self.chaseCount = 0
+    self.returnHome = False
+    self.deadForABit = False
+    self.deadCount = 0
 
-  def setPath(self):
-    self.ghostNodes = np.array([0,0])
-    self.setNodes()
+  def show(self, SCREEN):
+    self.chaseCount += 1
+    if self.chase:
+      if self.chaseCount > 2000:      # chase value...
+        self.chase = False
+        self.chaseCount = 0
+    else:
+      if self.chaseCount > 700:
+        self.chase = True
+        self.chaseCount = 0
+
+    if self.deadForABit:
+      self.deadCount += 1
+      if self.deadCount > 300:
+        self.deadForABit = False
+    else:
+      if not self.frightened:
+        if self.returnHome:
+          # Show blinking ghost
+          pass
+        else:
+          # Show normal ghost
+          color = (0,255,0)
+          pass
+        self.bestPath.show()      # to show the line the ghost take?
+      else:
+        if self.frightened:
+          self.flashCount += 1
+          if self.flashCount > 800:      # after 8 seconds ghosts are no longer frightened
+            self.frightened = False
+            self.flashCount = 0
+          if (self.flashCount//30)%2==0:
+            # Flash white color
+            pass
+          else:
+            # Flash blue color
+            pass
+      
+      # Show the ghost here (setting colors above)
+      pygame.draw.circle(SCREEN, color, (self.pos[0], self.pos[1]), 10)
+
+  def setPath(self, tile, pacman):
+    self.ghostNodes.clear()
+    self.setNodes(tile, pacman)
     self.start = self.ghostNodes[0]
     self.end = self.ghostNodes[-1]
-    AStar !!!
 
+    # print((self.start))
+    # print((self.start.edges))
+    # print(len(self.start.edges))
+    # print(len(self.end.edges))
+
+
+    from PacmanGame import AStar
+    temp = AStar(self.start, self.end, self.vel)    # Astar is from PacmanGame
+    if not temp:
+      self.bestPath = temp.clone()              # best path might be for showing line (path)
+      pass
+
+
+  def setNodes(self, tile, pacman):
+    self.ghostNodes.append(C_Node( ((self.pos[0]-8)//16), ((self.pos[1]-8)//16) ))
+    for i in range(27):
+      for j in range(30):
+        if not tile[j][i].wall:
+          if not tile[j-1][i].wall or not tile[j+1][i].wall:
+            if not tile[j][i-1].wall or not tile[j][i+1].wall:
+              self.ghostNodes.append(C_Node(i, j))
     
+    print(self.ghostNodes[0].x, " ", self.ghostNodes[0].y, " ", self.ghostNodes[0].edges)
+    print(self.ghostNodes[1].x, " ", self.ghostNodes[1].y, " ", self.ghostNodes[1].edges)
 
-  #   //calculates a path from the first node in ghost nodes to the last node in ghostNodes and sets it as best path
-#   void setPath() {
-#     ghostNodes.clear();
-#     setNodes();
-#     start  = ghostNodes.get(0);
-#     end = ghostNodes.get(ghostNodes.size()-1);
-#     Path temp = AStar(start, end, vel);
-#     if (temp!= null) {//if not path is found then dont change bestPath
-#       bestPath = temp.clone();
-#     }
-#   }
+    if self.returnHome:
+      print("BLINKY GOING HOME")
+      self.ghostNodes.append(C_Node(13,11))     
+    else:
+      if self.chase:
+        self.ghostNodes.append(C_Node( ((pacman.pos[0]-8)//16), ((pacman.pos[1]-8)//16) ))
+      else:
+        print("WHY HERE BRUH?")
+        self.ghostNodes.append(C_Node(1,1))
+
+    for i in range(len(self.ghostNodes)):
+      # print(len(self.ghostNodes[i].edges))
+      self.ghostNodes[i].addEdges(self.ghostNodes, tile)      # addEdges is C_Node function   
+
+  def move(self, pacman, tiles):
+    if not self.deadForABit:
+      self.pos = np.add(self.pos,self.vel)
+      self.checkDirection(pacman, tiles)
+
+  def checkDirection(self, pacman, tiles):
+    if pacman.hitPacman(self.pos):
+      if self.frightened:
+        self.returnHome = True
+        self.frightened = False
+      elif not self.returnHome:
+        pacman.kill()
+
+    if self.returnHome:
+      if math.dist([((self.pos[0]-8)/16), ((self.pos[1]-8)/16)], [13,11]) < 1:
+        self.returnHome = False
+        self.deadForABit = True
+        self.deadCount = 0
+
+    if (((self.pos[0]-8)%16) == 0) and (((self.pos[1]-8)%16) == 0):       # critical position (corner?)
+      matrixPosition = np.array([((self.pos[0]-8)//16), ((self.pos[1]-8)//16)])
+      if self.frightened:         # no path needs to generated by the ghost if frightened
+        isNode = False
+        for j in self.ghostNodes:
+          if matrixPosition[0] == j.x and matrixPosition[1] == j.y:
+            isNode = True
+        if not isNode:      # if not on a node then no need to do anything
+          return
+        else:
+          rand = np.random.randint(0,3)
+          match rand:
+            case 0:
+              newVal = np.array([1,0])
+            case 1:
+              newVal = np.array([0,1])
+            case 2:
+              newVal = np.array([-1,0])
+            case 3:
+              newVal = np.array([0,-1])
+
+          while tiles[(matrixPosition[1] + newVal[1])][(matrixPosition[0] + newVal[0])].wall or (((newVal[0] + 2*self.vel[0]) == 0) and ((newVal[1] + 2*self.vel[1]) == 0)):
+            rand = np.random.randint(0,3)
+            match rand:
+              case 0:
+                newVal = np.array([1,0])
+              case 1:
+                newVal = np.array([0,1])
+              case 2:
+                newVal = np.array([-1,0])
+              case 3:
+                newVal = np.array([0,-1])
+
+        self.vel = np.array([(newVal[0]//2), (newVal[1]//2)])
+
+      else:         # Not frightened
+        self.setPath(tiles, pacman)
+        for i in range(len(self.bestPath.path)):           # if currently on a node turn towards the direction of the next node in the path
+          if matrixPosition[0] == self.bestPath.path[i].x and matrixPosition[1] == self.bestPath.path[i].y:
+            self.vel = np.array([(self.bestPath.path[i+1].x - matrixPosition[0]), (self.bestPath.path[i+1].y - matrixPosition[1])])
+            # self.vel.limit(1)??
+
+            return
 
 # class Blinky {
 #   PVector pos = new PVector(13*16 +8, 11*16+8);//starting position
