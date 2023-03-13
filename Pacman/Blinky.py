@@ -112,6 +112,7 @@ class C_Blinky:
     
     print(self.ghostNodes[0].x, " ", self.ghostNodes[0].y, " ", self.ghostNodes[0].edges)
     print(self.ghostNodes[1].x, " ", self.ghostNodes[1].y, " ", self.ghostNodes[1].edges)
+    print(self.ghostNodes)
 
     if self.returnHome:
       print("BLINKY GOING HOME")

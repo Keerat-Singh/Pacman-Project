@@ -105,8 +105,8 @@ def playerMove(player, vel, ghost, tile):
 # returns the shortest path from the start node to the finish node
 def AStar(start, finish, vel):   #### np.array type
 
-  print(start)
-
+  print("ASTAR")
+  count = 0
   big = []   # stores C_Path  
   extend = C_Path()  # temp Path which is to be extended by adding another node
   winningPath = C_Path()  # final path
@@ -123,9 +123,10 @@ def AStar(start, finish, vel):   #### np.array type
 
 
   while True:
-    # print(time.time())
-    extend = big.pop()
-    if extend.path[-1].makeList() == finish.makeList():
+    print(time.time())
+    extend = big.pop(0)
+    # if extend.path[-1].makeList() == finish.makeList():
+    if (extend.path[-1].x == finish.x) and (extend.path[-1].y == finish.y):
       if not winner:
           winner = True
           winningPath = extend.clone()        # extend has Path object
@@ -135,9 +136,10 @@ def AStar(start, finish, vel):   #### np.array type
       if not big:
         return winningPath.clone()
       else:
-        extend = big.pop()
+        extend = big.pop(0)
         
-    
+    print(count)
+    count += 1
     if (not extend.path[-1].checked) or (extend.distance < extend.path[-1].smallestDistToPoint):
       if (not winner) or (extend.distance + math.dist([extend.path[-1].x, extend.path[-1].y], [finish.x, finish.y]) < winningPath.distance):
         extend.path[-1].smallestDistToPoint = copy.deepcopy(extend.distance)
@@ -149,12 +151,29 @@ def AStar(start, finish, vel):   #### np.array type
         
 
         for i in range(len(extend.path[-1].edges)):
-          
-          if tempN.makeList() != extend.path[-1].edges[i].makeList():       # Comparing C_Node, dunno if this works or what
+          # print("\nINSIDE: ",len(extend.path[-1].edges))
+          # print("INSIDE: Value of I is: ", i)
+          # print(tempN.makeList())
+          # print(extend.path[-1].edges[i].makeList(), end="\n\n")
 
+          # if tempN.makeList() != extend.path[-1].edges[i].makeList():       # Comparing C_Node, dunno if this works or what
+          if ((tempN.x!= extend.path[-1].edges[i].x) or (tempN.y!= extend.path[-1].edges[i].y)):       # Comparing C_Node, dunno if this works or what
+
+            print("INSIDE: Value of I is: ", i)
             directionToNode = np.array([extend.path[-1].edges[i].x - extend.path[-1].x, extend.path[-1].edges[i].y - extend.path[-1].y])
-            magnitude = np.sqrt(vel.dot(vel))             # directionToNode.limit(vel.mag());
-            directionToNode = directionToNode//magnitude
+            magnitude = np.linalg.norm(vel)                   # directionToNode.limit(vel.mag());
+            directionToNode = limit(directionToNode, magnitude)
+            
+            #   x = np.array([10.0,20.0,2.0])
+
+            #   def limit(vector, magnitude):
+            #     norm = np.linalg.norm(x)
+            #     if norm > magnitude:
+            #       vector *= magnitude/norm
+            #     return vector
+
+            #   print(limit(x,5))
+
             if (directionToNode[0] == -1*extend.velAtLast[0]) and (directionToNode[1] == -1*extend.velAtLast[1]):
               pass  # turning around
             else:
@@ -176,7 +195,7 @@ def AStar(start, finish, vel):   #### np.array type
 
       extend.path[-1].checked = True
 
-    # print(big)
+    print(big, "\n\n")
     if not big:
       if winner == False:
         print("ERROR MESSAGE")
@@ -184,6 +203,13 @@ def AStar(start, finish, vel):   #### np.array type
       else:
         return winningPath.clone() 
       
+# Limit 
+def limit(vector, magnitude):
+  norm = np.linalg.norm(vector)
+  if norm > magnitude:
+      vector = vector*(magnitude/norm)
+  return vector
+
       
 def main(tile, board, SCREEN, player, ghost, background):
     FPS = 60
@@ -213,6 +239,7 @@ def main(tile, board, SCREEN, player, ghost, background):
         # pygame.display.update()
         pygame.display.flip()
         fpsClock.tick(FPS)
+
 
         print(time.time()) 
 
