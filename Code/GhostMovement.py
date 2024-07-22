@@ -3,38 +3,25 @@ import Constants
 import random
 
 class C_GhostMovement():
-    
-    # direction = random.choice(Constants.DIRECTION)
 
     def update(self):
 
-        # Random movement; which will be updated for each ghost seperately
+        # Calculate the potential new position based on input
+        ghost_x, ghost_y = self.rect.x // Constants.SIZE, self.rect.y // Constants.SIZE
         if self.direction == 'LEFT':
-            self.rect.x -= self.speed
+            ghost_x -= 1 
         elif self.direction == 'RIGHT':
-            self.rect.x += self.speed
+            ghost_x += 1
         elif self.direction == 'UP':
-            self.rect.y -= self.speed
+            ghost_y -= 1
         elif self.direction == 'DOWN':
-            self.rect.y += self.speed
+            ghost_y += 1
 
         # Randomly change direction
-        if random.random() < 0.1:  # Change direction 2% of the time
+        if random.random() < 0.1:  # Change direction
             self.direction = random.choice(Constants.DIRECTION)
 
-        # Keep Ghost within the screen boundaries
-        if self.rect.left < 0:
-            self.rect.left = 0
-            self.direction = 'RIGHT'
-        if self.rect.right > Constants.SCREEN_WIDTH:
-            self.rect.right = Constants.SCREEN_WIDTH
-            self.direction = 'LEFT'
-        if self.rect.top < 0:
-            self.rect.top = 0
-            self.direction = 'DOWN'
-        if self.rect.bottom > Constants.SCREEN_HEIGHT:
-            self.rect.bottom = Constants.SCREEN_HEIGHT
-            self.direction = 'UP'
-
-            
-        # Need to check for the Board border 
+        # Check if the new position is valid
+        if self.can_move(ghost_x, ghost_y):
+            self.rect.x = ghost_x * Constants.SIZE
+            self.rect.y = ghost_y * Constants.SIZE

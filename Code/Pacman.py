@@ -6,32 +6,18 @@ from Player import C_Player
 # Pac-Man class
 class C_Pacman(C_Player):
 
-    def __init__(self):
+    def __init__(self, board):
 
         super().__init__()
+        self.board = board
         self.image = PG.Surface((Constants.PACMAN_SIZE, Constants.PACMAN_SIZE))
-        self.image.fill(Constants.YELLOW)
+        # self.image.fill(Constants.YELLOW)
         self.rect = self.image.get_rect()
-        self.rect.center = (Constants.SCREEN_WIDTH // 2, Constants.SCREEN_HEIGHT // 2)
-        self.speed = 5
+        self.rect.center = (Constants.PACMAN_SIZE*1.5, Constants.PACMAN_SIZE*1.5)
+        self.speed = Constants.PACMAN_SPEED
 
-    # def update(self):
-    #     keys = PG.key.get_pressed()
-    #     if keys[PG.K_LEFT]:
-    #         self.rect.x -= self.speed
-    #     if keys[PG.K_RIGHT]:
-    #         self.rect.x += self.speed
-    #     if keys[PG.K_UP]:
-    #         self.rect.y -= self.speed
-    #     if keys[PG.K_DOWN]:
-    #         self.rect.y += self.speed
+    def draw(self, screen):
+        PG.draw.circle(screen, (255, 255, 0), self.rect.center, self.rect.width // 2)      
 
-    #     # Keep Pac-Man within the screen boundaries
-    #     if self.rect.left < 0:
-    #         self.rect.left = 0
-    #     if self.rect.right > Constants.SCREEN_WIDTH:
-    #         self.rect.right = Constants.SCREEN_WIDTH
-    #     if self.rect.top < 0:
-    #         self.rect.top = 0
-    #     if self.rect.bottom > Constants.SCREEN_HEIGHT:
-    #         self.rect.bottom = Constants.SCREEN_HEIGHT
+    def update(self):
+        super().update()
