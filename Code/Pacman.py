@@ -11,13 +11,14 @@ class C_Pacman(C_Player):
         super().__init__()
         self.board = board
         self.image = PG.Surface((Constants.PACMAN_SIZE, Constants.PACMAN_SIZE))
-        # self.image.fill(Constants.YELLOW)
         self.rect = self.image.get_rect()
-        self.rect.center = (Constants.PACMAN_SIZE*1.5, Constants.PACMAN_SIZE*1.5)
-        self.speed = Constants.PACMAN_SPEED
+        self.rect.x = Constants.INITIAL_PACMAN_POSITION[Constants.MAP_INDEX][0]
+        self.rect.y = Constants.INITIAL_PACMAN_POSITION[Constants.MAP_INDEX][1]
 
-    def draw(self, screen):
-        PG.draw.circle(screen, (255, 255, 0), self.rect.center, self.rect.width // 2)      
+    def draw(self, screen):  
+        PG.draw.circle(screen, Constants.YELLOW, (self.rect.x * Constants.PACMAN_SIZE + Constants.PACMAN_SIZE//2, 
+                                                  self.rect.y * Constants.PACMAN_SIZE + Constants.PACMAN_SIZE//2),
+                                                  self.rect.width // 2)      
 
     def update(self):
         super().update()
