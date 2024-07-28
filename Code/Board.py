@@ -40,22 +40,19 @@ class C_Board:
 
 
     def __init__(self, index):
-        # self.width = 0
-        # self.height = 0
         self.index = index
         self.map =  self.map[index]
+        self.total_food_count = self.count_food(self.map)
         Constants.board_height = len(self.map)
         Constants.board_width = len(self.map[0])
         Constants.screen_height = Constants.board_height*Constants.SIZE
         Constants.screen_width = Constants.board_width*Constants.SIZE
 
-    # def size(self, width, height):
-    #     self.width = width
-    #     self.height = height
-
-    def create(self, index, all_sprites):
-        # Display the board
-        
-        for row in self.map:
-            for i in row:
-                all_sprites.add(i)
+    # to count the total number of food/power up
+    def count_food(self, map):
+        temp = 0
+        for i in map:
+            for j in i:
+                if j != 1:
+                    temp += 1
+        return temp

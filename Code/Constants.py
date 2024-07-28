@@ -19,7 +19,7 @@ GREEN = (0, 255, 0)
 GREY = (120, 120, 120)
 
 # Gameplay Components
-NUMBER_OF_GHOST = 1
+NUMBER_OF_GHOST = 2             # From 1-4
 PACMAN_SPEED = .2
 GHOST_SPEED = 6
 DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN']
@@ -29,9 +29,14 @@ PACMAN_LIVE = 3
 GHOST_STATE = ['NOT_CHASE', 'CHASE', 'BEING_CHASED', 'DEAD']
 BOARD_SIZE = SIZE
 MOVE_DELAY = 5
-SPEED_DIFFERENCE = 3    # This is how much frames the ghost is slower than pacman
+SPEED_DIFFERENCE = 0    # This is how much frames the ghost is slower than pacman (increase to slower ghost speed)
+
+# Initial position
 INITIAL_PACMAN_POSITION = [[15,10]]     # This should map with board and MAP_INDEX
-# TODO INITIAL_GHOST_POSITION
+INITIAL_BLINKY_POSITION = [[24,29]]     # This should map with board and MAP_INDEX
+INITIAL_CLYDE_POSITION = [[24,1]]     # This should map with board and MAP_INDEX
+INITIAL_INKY_POSITION = [[3,1]]     # This should map with board and MAP_INDEX
+INITIAL_PINKY_POSITION = [[3,29]]     # This should map with board and MAP_INDEX
 
 # Score
 POWER_UP_SCORE = 50

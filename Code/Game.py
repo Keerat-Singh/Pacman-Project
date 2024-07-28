@@ -5,8 +5,11 @@ from Ghost import C_Ghost
 from Pacman import C_Pacman
 import time
 from Board import C_Board
-from Food import C_Food
 import HelperFunction
+from Blinky import C_Blinky
+from Clyde import C_Clyde
+from Inky import C_Inky
+from Pinky import C_Pinky
 
 # Initialize PG
 PG.init()
@@ -21,26 +24,6 @@ PG.display.set_caption("Pac-Man Game")
 # Creating a font object
 font = PG.font.Font(None, 36)
 
-# Initializing food and power ups
-temp = [[None]*(Constants.board_width) for i in range(Constants.board_height)]
-for y, row in enumerate(board.map):
-    for x, cell in enumerate(row):
-        if cell == 0:
-            temp[y][x] = C_Food(x, y, cell)
-        elif cell == 8:
-            temp[y][x] = C_Food(x, y, cell)
-
-# Removing all the None values
-foods = temp
-# foods = [[value for value in row if value != None] for row in temp]
-# foods=  [sublist for sublist in foods if sublist]
-
-################################ Testing #################################################################################################
-
-# print(Constants.INITIAL_PACMAN_POSITION[Constants.MAP_INDEX][0])
-# print(Constants.INITIAL_PACMAN_POSITION[Constants.MAP_INDEX][1])
-
-###########################################################################################################################################
 # FUNCTIONS
 # drawing board and dots
 def draw_board(screen, board):
@@ -59,16 +42,8 @@ def draw_board(screen, board):
                 color = Constants.GREEN
                 PG.draw.circle(screen, color, (x * Constants.BOARD_SIZE + Constants.SIZE//2, y * Constants.BOARD_SIZE + Constants.SIZE//2), Constants.BOARD_SIZE // 3)
             else:
+                # This is for when food/power up is eaten and we are not displaying
                 continue
-                # color = Constants.WHITE       
-                # PG.draw.rect(screen, color, PG.Rect(x * Constants.BOARD_SIZE, y * Constants.BOARD_SIZE, Constants.BOARD_SIZE, Constants.BOARD_SIZE))
-
-# # Displaying food and power up
-# def draw_food(screen, foods):
-#     for y, row in enumerate((foods)):
-#         for x, cell in enumerate(row):
-#             if cell != None:
-#                 cell.show(screen)
 
 def display_score(screen):
     score_text = font.render(f'Score: {Constants.TOTAL_SCORE}', True, Constants.WHITE)
@@ -84,7 +59,14 @@ def main():
     pacman = C_Pacman(board)
     
     # Creating ghosts object which will be changed to each specific ghost later; MAX 4?
-    ghosts = [C_Ghost(board, pacman) for _ in range(Constants.NUMBER_OF_GHOST)]
+    blinky = C_Blinky(board, pacman)
+    clyde = C_Clyde(board, pacman)
+    inky = C_Inky(board, pacman)
+    pinky = C_Pinky(board, pacman)
+    ghosts = [blinky, clyde, inky, pinky]
+    ghosts = ghosts[:Constants.NUMBER_OF_GHOST]
+    print(ghosts)
+    # Can add a limit using Constants.NUMBER_OF_GHOST
 
     RUNNING = True
     while RUNNING:
@@ -99,19 +81,15 @@ def main():
 
         # Check for collisions between Pac-Man and ghosts
         for ghost in ghosts:
-            print(ghost.state)
             if HelperFunction.current_position(pacman) == HelperFunction.current_position(ghost):
                 # Get ghost current state to check if it can kill pacman or pacman can kill ghost
-                # TODO Not working?? maybe cuz of astar?
-                if ((ghost.current_state == "NOT_CHASE")):
-                # if (ghost.current_state == 'NOT_CHASE'):
+                if ghost.current_state() < 2:                  
                     print("GAME ENDING!")
                     RUNNING = False  # End the game on collision
                 else:
                     # This will only happen when pacman has eaten the food
-                    # ghost.update_state(3)
-                    # Constants.TOTAL_SCORE += Constants.GHOST_KILL_SCORE
-                    print("Inside else: ",ghost.state)
+                    ghost.update_state(3)
+                    Constants.TOTAL_SCORE += Constants.GHOST_KILL_SCORE
 
         # if PG.sprite.spritecollideany(pacman, ghosts):
 
@@ -120,11 +98,18 @@ def main():
             case 0:
                 board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]] = 9
                 Constants.TOTAL_SCORE += Constants.FOOD_SCORE
+                board.total_food_count -= 1
             case 8:
                 board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]] = 9
                 Constants.TOTAL_SCORE += Constants.POWER_UP_SCORE
+                board.total_food_count -= 1
                 for ghost in ghosts:
                     ghost.update_state(2)
+        
+        # If you have eaten food/power up -- win condition
+        if board.total_food_count == 0:
+            print("GAME WON!")
+            RUNNING = False  # End the game on collision
 
         screen.fill(Constants.BLACK)
 

@@ -33,10 +33,6 @@ class AStar:
         
         while open_set:
             _, current = heapq.heappop(open_set)
-            # print(f"While loop start here #################################################################### Open Set: {open_set}")
-            # print(f"_: {_}")
-            # print(f"Current: {current}")
-            # print(f"Goal: {goal}")
             if current == goal:
                 path = []
                 while current in came_from:
@@ -50,11 +46,8 @@ class AStar:
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
-                    f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, goal)
-                    # print(f"Before: {open_set}")
+                    f_score[neighbor] = self.heuristic(neighbor, goal)
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
-                    # print(f"After: {open_set}")
-        
 
         return []
 
@@ -68,4 +61,4 @@ def can_move(self, new_x, new_y):
 
 # Returns current position for the element, - for checking collision
 def current_position(self):
-    return [self.rect.x, self.rect.y]
+    return (self.rect.x, self.rect.y)

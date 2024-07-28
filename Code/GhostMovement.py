@@ -9,7 +9,7 @@ class C_GhostMovement():
         
         # Will check for different ghost state and update movement accourdingly
         match self.state:
-            case "NOT_CHASE":
+            case 0:
 
                 # Calculate the potential new position based on input
                 ghost_x, ghost_y = self.rect.x, self.rect.y
@@ -31,17 +31,32 @@ class C_GhostMovement():
                     self.rect.x = ghost_x
                     self.rect.y = ghost_y
                 
-            case "CHASE":
+            case 1:
 
-                # Astar will be called
-                return 'test'
-            case "BEING_CHASED":
+                ghost_pos = (self.rect.x, self.rect.y)
+                # print(f"Current Ghost position: {ghost_pos}")
+                self.path = self.astar_helper.find_path(ghost_pos, self.goal_pos)
+                if self.path:
+                    next_pos = self.path.pop(0)
+                    # if self.can_move(next_pos[0], next_pos[1]):
+                    if HelperFunction.can_move(self, next_pos[0], next_pos[1]):
+                        self.rect.x = next_pos[0]
+                        self.rect.y = next_pos[1]
 
-                # Ghost will go to its initial position and then move randomly once reached 
-                return 'test'
+            case 2:
+
+                ghost_pos = (self.rect.x, self.rect.y)
+                # print(f"Current Ghost position: {ghost_pos}")
+                self.path = self.astar_helper.find_path(ghost_pos, self.goal_pos)
+                if self.path:
+                    next_pos = self.path.pop(0)
+                    # if self.can_move(next_pos[0], next_pos[1]):
+                    if HelperFunction.can_move(self, next_pos[0], next_pos[1]):
+                        self.rect.x = next_pos[0]
+                        self.rect.y = next_pos[1]
             
             # Can remove below states
-            case "DEAD":
+            case 3:
                 return 'ghost is dead'
             case _:
                 return "a new state found"
