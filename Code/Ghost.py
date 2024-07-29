@@ -41,69 +41,43 @@ class C_Ghost(PG.sprite.Sprite):
         self.timer_thread.daemon = True
         self.timer_thread.start()
 
-    # TODO the sleep timer is running for check if state is 0 or 1; even when the state has been changed to 2 or 3
+
     def run_timer(self):
+        small_sleep_interval = 0.1
         while True:
-            
-            time.sleep(self.state_switch_timer)
-            # if ghost state can switch and is 0 or 1 then change to 0 or 1
             if self.state < 2:
-                self.state = 1 - self.state
+                elapsed_time = 0
+                while self.state < 2 and elapsed_time < self.state_switch_timer:
+                    time.sleep(small_sleep_interval)
+                    elapsed_time += small_sleep_interval
+                if self.state < 2:
+                    self.state = 1 - self.state
+                print(f"State changed to: {Constants.GHOST_STATE[self.state]}")
             elif self.state == 2:
                 print('Ghost running')
-                time.sleep(self.being_chased_timer)
-                print('Ghost running completed')
-                self.update_state(0)
+                elapsed_time = 0
+                while self.state == 2 and elapsed_time < self.being_chased_timer:
+                    time.sleep(small_sleep_interval)
+                    elapsed_time += small_sleep_interval
+                if self.state == 2:
+                    print('Ghost running completed')
+                    self.update_state(0)
             else:
-                time.sleep(self.death_timer)
-                self.spawn_ghost()
+                elapsed_time = 0
+                while self.state == 3 and elapsed_time < self.death_timer:
+                    time.sleep(small_sleep_interval)
+                    elapsed_time += small_sleep_interval
+                if self.state == 3:
+                    self.spawn_ghost()
             print(f"State changed to: {Constants.GHOST_STATE[self.state]}")
-                # self.update_state(0)
-            # self.toggle_state()
 
-
-    def toggle_state(self):
-        if self.state == 0:
-            self.state = 1
-        elif self.state == 1:
-            self.state = 0
-        print(f"State changed to: {Constants.GHOST_STATE[self.state]}")
-        
     
     def update(self):
-        # Timer to switing state
-        # if self.state_switch_counter < self.state_switch_timer:
-        #     self.state = 1 - self.state
-        #     print("How fast is switch: ", Constants.GHOST_STATE[self.state])
-        #     self.state_switch_counter = 0
-
         # Updating frame
         self.frame_counter += 1
         if self.frame_counter >= Constants.MOVE_DELAY + Constants.SPEED_DIFFERENCE:
             self.frame_counter = 0
             self.goal_pos = self.goal_update()
-            # Updating values to update ghost state from 0 to 1 and vice versa
-
-            # match self.state:
-            #     case 0:
-            #         return
-            #     # update goal_pos for AStar algo
-            #     case 1:
-            #         self.goal_pos = HelperFunction.current_position(self.pacman)
-            #     case 2:
-            #         self.goal_pos = (self.initialx, self.initialy)
-                
-            # pacman_pos = HelperFunction.current_position(self.pacman)
-            # # print(f"Current Pacman position: {pacman_pos}")
-            # ghost_pos = (self.rect.x, self.rect.y)
-            # # print(f"Current Ghost position: {ghost_pos}")
-            # self.path = self.astar_helper.find_path(ghost_pos, pacman_pos)
-            # if self.path:
-            #     next_pos = self.path.pop(0)
-            #     # if self.can_move(next_pos[0], next_pos[1]):
-            #     if HelperFunction.can_move(self, next_pos[0], next_pos[1]):
-            #         self.rect.x = next_pos[0]
-            #         self.rect.y = next_pos[1]
 
             # Movement
             C_GhostMovement.update(self= self)

@@ -19,7 +19,7 @@ GREEN = (0, 255, 0)
 GREY = (120, 120, 120)
 
 # Gameplay Components
-NUMBER_OF_GHOST = 2             # From 1-4
+NUMBER_OF_GHOST = 4             # From 1-4
 PACMAN_SPEED = .2
 GHOST_SPEED = 6
 DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN']

@@ -1,5 +1,6 @@
 import Constants
 import heapq
+import random
 
 class AStar:
     
@@ -27,7 +28,8 @@ class AStar:
         # print(f"open set: {open_set}")
         came_from = {}
         g_score = {start: 0}
-        f_score = {start: self.heuristic(start, goal)}
+        # f_score = {start: self.heuristic(start, goal)}
+        f_score = {start: calculate_distance(start, goal)}
         # print(g_score)
         # print(f_score)
         
@@ -42,6 +44,37 @@ class AStar:
                 return path
             
             for neighbor in self.get_neighbors(current):
+                tentative_g_score = g_score[current] + 1
+                if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g_score
+                    # f_score[neighbor] = self.heuristic(neighbor, goal)
+                    f_score[neighbor] = calculate_distance(neighbor, goal)
+                    heapq.heappush(open_set, (f_score[neighbor], neighbor))
+
+        return []
+    
+
+    def find_path_avoiding_pacman(self, start, goal, pacman_pos):
+        open_set = []
+        heapq.heappush(open_set, (0, start))
+        came_from = {}
+        g_score = {start: 0}
+        f_score = {start: self.heuristic(start, goal)}
+        
+        while open_set:
+            _, current = heapq.heappop(open_set)
+            if current == goal:
+                path = []
+                while current in came_from:
+                    path.append(current)
+                    current = came_from[current]
+                path.reverse()
+                return path
+            
+            for neighbor in self.get_neighbors(current):
+                if neighbor == pacman_pos:
+                    continue  # Avoid Pacman's position
                 tentative_g_score = g_score[current] + 1
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                     came_from[neighbor] = current
@@ -62,3 +95,50 @@ def can_move(self, new_x, new_y):
 # Returns current position for the element, - for checking collision
 def current_position(self):
     return (self.rect.x, self.rect.y)
+
+def calculate_distance(pos1, pos2):
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+def is_pacman_closer(self, pacman_pos, initial_pos):
+    pacman_distance = calculate_distance(pacman_pos, initial_pos)
+    ghost_distance = calculate_distance((self.rect.x, self.rect.y), initial_pos)
+    return pacman_distance < ghost_distance
+
+def run_away_from_pacman(self, pacman_pos):
+    directions = Constants.DIRECTION[:]
+    random.shuffle(directions)
+    for direction in directions:
+        ghost_x, ghost_y = self.rect.x, self.rect.y
+        if direction == 'LEFT':
+            ghost_x -= 1
+        elif direction == 'RIGHT':
+            ghost_x += 1
+        elif direction == 'UP':
+            ghost_y -= 1
+        elif direction == 'DOWN':
+            ghost_y += 1
+        if can_move(self, ghost_x, ghost_y):
+            if calculate_distance((ghost_x, ghost_y), pacman_pos) > calculate_distance((self.rect.x, self.rect.y), pacman_pos):
+                self.rect.x = ghost_x
+                self.rect.y = ghost_y
+                break
+
+
+def random_movement(self):
+    ghost_x, ghost_y = self.rect.x, self.rect.y
+    if self.direction == 'LEFT':
+        ghost_x -= 1 
+    elif self.direction == 'RIGHT':
+        ghost_x += 1
+    elif self.direction == 'UP':
+        ghost_y -= 1
+    elif self.direction == 'DOWN':
+        ghost_x += 1
+
+    if random.random() < 0.1:
+        self.direction = random.choice(Constants.DIRECTION)
+        print("How fast is this switching", self.direction)
+
+    if can_move(self, ghost_x, ghost_y):
+        self.rect.x = ghost_x
+        self.rect.y = ghost_y
