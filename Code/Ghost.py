@@ -27,6 +27,7 @@ class C_Ghost(PG.sprite.Sprite):
 
         # For movement
         self.frame_counter = 0
+        self.speed_difference = 1    # This is how much frames the ghost is slower than pacman (increase to slower ghost speed)
 
         # Astar components
         self.astar_helper = HelperFunction.AStar(board.map)
@@ -75,7 +76,7 @@ class C_Ghost(PG.sprite.Sprite):
     def update(self):
         # Updating frame
         self.frame_counter += 1
-        if self.frame_counter >= Constants.MOVE_DELAY + Constants.SPEED_DIFFERENCE:
+        if self.frame_counter >= Constants.MOVE_DELAY + self.speed_difference:
             self.frame_counter = 0
             self.goal_pos = self.goal_update()
 
@@ -126,3 +127,21 @@ class C_Ghost(PG.sprite.Sprite):
         else:
             new_goal = (self.initialx, self.initialy)
         return new_goal
+    
+    def random_movement(self):
+        ghost_x, ghost_y = self.rect.x, self.rect.y
+        if self.direction == 'LEFT':
+            ghost_x -= 1 
+        elif self.direction == 'RIGHT':
+            ghost_x += 1
+        elif self.direction == 'UP':
+            ghost_y -= 1
+        elif self.direction == 'DOWN':
+            ghost_x += 1
+
+        if random.random() < 0.1:
+            self.direction = random.choice(Constants.DIRECTION)
+
+        if HelperFunction.can_move(self, ghost_x, ghost_y):
+            self.rect.x = ghost_x
+            self.rect.y = ghost_y

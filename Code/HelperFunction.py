@@ -122,23 +122,3 @@ def run_away_from_pacman(self, pacman_pos):
                 self.rect.x = ghost_x
                 self.rect.y = ghost_y
                 break
-
-
-def random_movement(self):
-    ghost_x, ghost_y = self.rect.x, self.rect.y
-    if self.direction == 'LEFT':
-        ghost_x -= 1 
-    elif self.direction == 'RIGHT':
-        ghost_x += 1
-    elif self.direction == 'UP':
-        ghost_y -= 1
-    elif self.direction == 'DOWN':
-        ghost_x += 1
-
-    if random.random() < 0.1:
-        self.direction = random.choice(Constants.DIRECTION)
-        print("How fast is this switching", self.direction)
-
-    if can_move(self, ghost_x, ghost_y):
-        self.rect.x = ghost_x
-        self.rect.y = ghost_y

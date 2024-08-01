@@ -29,7 +29,6 @@ PACMAN_LIVE = 3
 GHOST_STATE = ['NOT_CHASE', 'CHASE', 'BEING_CHASED', 'DEAD']
 BOARD_SIZE = SIZE
 MOVE_DELAY = 5
-SPEED_DIFFERENCE = 0    # This is how much frames the ghost is slower than pacman (increase to slower ghost speed)
 
 # Initial position
 INITIAL_PACMAN_POSITION = [[15,10]]     # This should map with board and MAP_INDEX
