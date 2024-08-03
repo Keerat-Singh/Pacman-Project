@@ -14,6 +14,7 @@ class C_Pacman(C_Player):
         self.rect = self.image.get_rect()
         self.rect.x = Constants.INITIAL_PACMAN_POSITION[Constants.MAP_INDEX][0]
         self.rect.y = Constants.INITIAL_PACMAN_POSITION[Constants.MAP_INDEX][1]
+        self.direction = 'DOWN'
 
     def draw(self, screen):  
         PG.draw.circle(screen, Constants.YELLOW, (self.rect.x * Constants.PACMAN_SIZE + Constants.PACMAN_SIZE//2, 

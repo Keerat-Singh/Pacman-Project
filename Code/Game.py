@@ -61,7 +61,7 @@ def main():
     # Creating ghosts object which will be changed to each specific ghost later; MAX 4?
     blinky = C_Blinky(board, pacman)
     clyde = C_Clyde(board, pacman)
-    inky = C_Inky(board, pacman)
+    inky = C_Inky(board, pacman, blinky)
     pinky = C_Pinky(board, pacman)
     ghosts = [blinky, clyde, inky, pinky]
     ghosts = ghosts[:Constants.NUMBER_OF_GHOST]
@@ -75,9 +75,8 @@ def main():
             if event.type == PG.QUIT:
                 RUNNING = False
 
+        # Updating ghost position/info
         pacman.update()
-        for ghost in ghosts:
-            ghost.update()
 
         # Check for collisions between Pac-Man and ghosts
         for ghost in ghosts:
@@ -91,8 +90,10 @@ def main():
                     ghost.update_state(3)
                     Constants.TOTAL_SCORE += Constants.GHOST_KILL_SCORE
 
-        # if PG.sprite.spritecollideany(pacman, ghosts):
-
+        # Updating ghost position/info
+        for ghost in ghosts:
+            ghost.update()
+            
         # Checking for food collision
         match board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]]:
             case 0:

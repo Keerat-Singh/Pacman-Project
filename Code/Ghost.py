@@ -129,19 +129,38 @@ class C_Ghost(PG.sprite.Sprite):
         return new_goal
     
     def random_movement(self):
+        # Current position
         ghost_x, ghost_y = self.rect.x, self.rect.y
+
+        # Determine the next position based on current direction
         if self.direction == 'LEFT':
-            ghost_x -= 1 
+            ghost_x -= 1
         elif self.direction == 'RIGHT':
             ghost_x += 1
         elif self.direction == 'UP':
             ghost_y -= 1
         elif self.direction == 'DOWN':
-            ghost_x += 1
+            ghost_y += 1
 
-        if random.random() < 0.1:
-            self.direction = random.choice(Constants.DIRECTION)
-
+        # Check if the new position is valid
         if HelperFunction.can_move(self, ghost_x, ghost_y):
+            # Move to the new position
             self.rect.x = ghost_x
             self.rect.y = ghost_y
+        # else:
+        #     # If movement is blocked, do not change direction
+        #     return
+
+        # Decide whether to change direction based on a lower probability
+        if random.random() < 0.1:
+            new_direction = random.choice(Constants.DIRECTION)
+            
+            # Prevent moving directly back to the previous direction
+            if (self.direction == 'LEFT' and new_direction == 'RIGHT') or \
+            (self.direction == 'RIGHT' and new_direction == 'LEFT') or \
+            (self.direction == 'UP' and new_direction == 'DOWN') or \
+            (self.direction == 'DOWN' and new_direction == 'UP'):
+                return
+            
+            # Update the direction
+            self.direction = new_direction
