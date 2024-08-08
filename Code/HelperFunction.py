@@ -21,17 +21,11 @@ class AStar:
         return neighbors   
 
     def find_path(self, start, goal):
-        # print(f"Ghost position: {start}")
-        # print(f"Pacman position: {goal}")
         open_set = []
         heapq.heappush(open_set, (0, start))
-        # print(f"open set: {open_set}")
         came_from = {}
         g_score = {start: 0}
-        # f_score = {start: self.heuristic(start, goal)}
         f_score = {start: calculate_distance(start, goal)}
-        # print(g_score)
-        # print(f_score)
         
         while open_set:
             _, current = heapq.heappop(open_set)
@@ -48,7 +42,6 @@ class AStar:
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
-                    # f_score[neighbor] = self.heuristic(neighbor, goal)
                     f_score[neighbor] = calculate_distance(neighbor, goal)
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
 

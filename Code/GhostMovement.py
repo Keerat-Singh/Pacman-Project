@@ -34,7 +34,8 @@ class C_GhostMovement():
                 initial_pos = (self.initialx, self.initialy)
 
                 # if ghost_pos == initial_pos:
-                    
+                #     self.loop_around_initial()
+                # else:
                 if HelperFunction.is_pacman_closer(self, pacman_pos, initial_pos):
                     HelperFunction.run_away_from_pacman(self, pacman_pos)
                 else:

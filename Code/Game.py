@@ -126,7 +126,7 @@ def main():
         # Draw Pacman
         pacman.draw(screen)
 
-        # print(f"pacman position outside ghost info: {HelperFunction.current_position(pacman)}")
+        # print(f"blinky position: {HelperFunction.current_position(blinky)}")
 
         # Draw ghosts; this will later be for each single ghost differently
         for ghost in ghosts:

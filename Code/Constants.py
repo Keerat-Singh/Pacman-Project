@@ -13,7 +13,10 @@ GHOST_SIZE = SIZE
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 YELLOW = (255, 255, 0)
-RED = (255, 0, 0)
+BLINKY_COLOR = (255, 0, 0)
+CLYDE_COLOR = (255, 184, 81)
+INKY_COLOR = (0, 255, 255)
+PINKY_COLOR = (255, 184, 255)
 BLUE = (0, 0, 255)
 GREEN = (0, 255, 0)
 GREY = (120, 120, 120)
@@ -33,9 +36,9 @@ MOVE_DELAY = 5
 # Initial position
 INITIAL_PACMAN_POSITION = [[15,10]]     # This should map with board and MAP_INDEX
 INITIAL_BLINKY_POSITION = [[24,29]]     # This should map with board and MAP_INDEX
-INITIAL_CLYDE_POSITION = [[24,1]]     # This should map with board and MAP_INDEX
+INITIAL_CLYDE_POSITION = [[3,29]]     # This should map with board and MAP_INDEX
 INITIAL_INKY_POSITION = [[3,1]]     # This should map with board and MAP_INDEX
-INITIAL_PINKY_POSITION = [[3,29]]     # This should map with board and MAP_INDEX
+INITIAL_PINKY_POSITION = [[24,1]]     # This should map with board and MAP_INDEX
 
 # Score
 POWER_UP_SCORE = 50
