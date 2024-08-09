@@ -11,8 +11,8 @@ class C_Pinky(C_Ghost):
         self.ghost_color = Constants.PINKY_COLOR
 
         # looping path; we are caculating the smallest path when ghosts are generated; only once         
-        self.smallest_loop_path = self.smallest_looping_path(self.initialx, self.initialy, board.map)
-        print(f"Smallest loop path for Pinky: {self.smallest_loop_path}")
+        self.smallest_loop_path = self.finding_smallest_looping_path(self.initialx, self.initialy, board.map)
+        self.current_path_index = 0
 
     # TODO might need to update the target position logic as right now pinky can get stuck if target position is invalid; like a wall/out of bounds
     def goal_update(self):

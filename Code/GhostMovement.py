@@ -33,31 +33,21 @@ class C_GhostMovement():
                 pacman_pos = HelperFunction.current_position(self.pacman)
                 initial_pos = (self.initialx, self.initialy)
 
-                # if ghost_pos == initial_pos:
-                #     self.loop_around_initial()
-                # else:
-                if HelperFunction.is_pacman_closer(self, pacman_pos, initial_pos):
-                    HelperFunction.run_away_from_pacman(self, pacman_pos)
-                else:
-                    self.path = self.astar_helper.find_path_avoiding_pacman(ghost_pos, initial_pos, pacman_pos)
-                    if self.path:
-                        next_pos = self.path.pop(0)
-                        if HelperFunction.can_move(self, next_pos[0], next_pos[1]):
-                            self.rect.x = next_pos[0]
-                            self.rect.y = next_pos[1]
+                if self.reached_home_flag:
+                    self.reached_home_case_2 = True
 
-                
-                # if ghost_pos == initial_pos:
-                #     HelperFunction.random_movement(self)
-                # elif HelperFunction.is_pacman_closer(self, pacman_pos, initial_pos):
-                #     HelperFunction.run_away_from_pacman(self, pacman_pos)
-                # else:
-                #     self.path = self.astar_helper.find_path_avoiding_pacman(ghost_pos, initial_pos, pacman_pos)
-                #     if self.path:
-                #         next_pos = self.path.pop(0)
-                #         if HelperFunction.can_move(self, next_pos[0], next_pos[1]):
-                #             self.rect.x = next_pos[0]
-                #             self.rect.y = next_pos[1]
+                if self.reached_home_case_2:
+                    self.looping_smallest_path()
+                else:
+                    if HelperFunction.is_pacman_closer(self, pacman_pos, initial_pos):
+                        HelperFunction.run_away_from_pacman(self, pacman_pos)
+                    else:
+                        self.path = self.astar_helper.find_path_avoiding_pacman(ghost_pos, initial_pos, pacman_pos)
+                        if self.path:
+                            next_pos = self.path.pop(0)
+                            if HelperFunction.can_move(self, next_pos[0], next_pos[1]):
+                                self.rect.x = next_pos[0]
+                                self.rect.y = next_pos[1]
             
             case 3:
                 return 'ghost is dead'

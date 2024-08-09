@@ -45,6 +45,10 @@ class C_Ghost(PG.sprite.Sprite):
         self.timer_thread.daemon = True
         self.timer_thread.start()
 
+        # Reached home flag 
+        self.reached_home_flag = False
+        self.reached_home_case_2 = False
+
     def run_timer(self):
         small_sleep_interval = 0.1      # This is used in addition with elapsed time to have timer
         while True:
@@ -72,9 +76,10 @@ class C_Ghost(PG.sprite.Sprite):
                     time.sleep(small_sleep_interval)
                     elapsed_time += small_sleep_interval
                 if self.state == 2:
+                    self.reached_home_case_2 = False
                     self.update_state(0)
             # Ghost dead state
-            else:
+            elif self.state == 3:
                 elapsed_time = 0
                 while self.state == 3 and elapsed_time < self.death_timer:
                     time.sleep(small_sleep_interval)
@@ -89,6 +94,9 @@ class C_Ghost(PG.sprite.Sprite):
         if self.frame_counter >= Constants.MOVE_DELAY + self.speed_difference:
             self.frame_counter = 0
             self.goal_pos = self.goal_update()
+
+            # Updating flag info; will always tell us if the ghost is at home location or not
+            self.reached_home_flag = True if (self.rect.x, self.rect.y) == (self.initialx, self.initialy) else False
 
             # Movement
             C_GhostMovement.update(self= self)
@@ -105,18 +113,13 @@ class C_Ghost(PG.sprite.Sprite):
                                                            self.rect.y * Constants.BOARD_SIZE, 
                                                            Constants.BOARD_SIZE, Constants.BOARD_SIZE))
 
-    def dead_position(self):
-        self.rect.x = -Constants.GHOST_SIZE
-        self.rect.y = -Constants.GHOST_SIZE
-        # refreshing dead counter 
-        self.death_counter = 0
-        
     # Updating ghost state 
     def update_state(self, index):
         self.state = index
-        # checking for dead state
+        # checking for dead state; and if dead update position to be out of bounds
         if self.state == 3:
-            self.dead_position()
+            self.rect.x = -Constants.GHOST_SIZE
+            self.rect.y = -Constants.GHOST_SIZE
 
     def current_state(self):
         return self.state
@@ -126,17 +129,6 @@ class C_Ghost(PG.sprite.Sprite):
         self.update_state(0)
         # Updating ghost position to initial position
         self.rect.x, self.rect.y = self.initialx, self.initialy
-        
-    # def goal_update(self):
-    #     new_goal = ()
-    #     # Ghost can chase/not chase
-    #     if self.state < 2:
-    #         new_goal = HelperFunction.current_position(self.pacman)     # this will be different (chasing position) for each ghost?
-
-    #     # Ghost is being chased
-    #     else:
-    #         new_goal = (self.initialx, self.initialy)
-    #     return new_goal
     
     def random_movement(self):
         # Current position
@@ -179,7 +171,7 @@ class C_Ghost(PG.sprite.Sprite):
         #     self.direction = new_direction
 
 
-    def smallest_looping_path(self, initialx, initialy, board):
+    def finding_smallest_looping_path(self, initialx, initialy, board):
         goal = (initialx, initialy) 
         visited = set()
 
@@ -190,16 +182,13 @@ class C_Ghost(PG.sprite.Sprite):
         # after this we will find the shortest path from start to initial position; and will also update valid path with this initial middle visited path info 
         start = self.getting_middle_path(initialx, initialy, valid_paths, visited)
 
-        # TODO can perform A* algo with checking the visited info
         # Priority queue for A* (cost, current position, path)
         open_list = []
-        # heapq.heappush(open_list, (0, start, [start]))
         heapq.heappush(open_list, (0 + HelperFunction.calculate_distance(start, goal), start, [start]))
         
         # Dictionaries for tracking costs and paths
         g_cost = {start: 0}
         f_cost = {start: HelperFunction.calculate_distance(start, goal)}
-        print(f_cost)
         
         while open_list:
             current_cost, current_pos, path = heapq.heappop(open_list)
@@ -266,3 +255,15 @@ class C_Ghost(PG.sprite.Sprite):
 
         # x and y are the new starting position
         return (x, y)
+    
+    
+    # This is to loop the smallest path for each respective ghost once they have reached their base
+    def looping_smallest_path(self):
+        
+        if self.current_path_index < len(self.smallest_loop_path) - 1:
+            self.rect.x, self.rect.y =  self.smallest_loop_path[self.current_path_index]
+            self.current_path_index += 1
+        else:
+            # Loop back to the start of the path if needed
+            self.current_path_index = 0
+            self.rect.x, self.rect.y = self.smallest_loop_path[self.current_path_index]

@@ -12,8 +12,8 @@ class C_Blinky(C_Ghost):
         self.ghost_color = Constants.BLINKY_COLOR
         
         # looping path; we are caculating the smallest path when ghosts are generated; only once         
-        self.smallest_loop_path = self.smallest_looping_path(self.initialx, self.initialy, board.map)
-        print(f"Smallest loop path for Blinky: {self.smallest_loop_path}")
+        self.smallest_loop_path = self.finding_smallest_looping_path(self.initialx, self.initialy, board.map)
+        self.current_path_index = 0
 
     def goal_update(self):
         if self.state < 2:

@@ -65,7 +65,6 @@ def main():
     pinky = C_Pinky(board, pacman)
     ghosts = [blinky, clyde, inky, pinky]
     ghosts = ghosts[:Constants.NUMBER_OF_GHOST]
-    print(ghosts)
     # Can add a limit using Constants.NUMBER_OF_GHOST
 
     RUNNING = True
