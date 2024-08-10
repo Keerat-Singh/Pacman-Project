@@ -6,7 +6,7 @@ class C_Board:
     # 0 is food
     # 8 is power up
     # 1 is wall
-    map =   [[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+    _static_map =   [[[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
             [1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1], 
             [1, 8, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 8, 1], 
@@ -41,7 +41,7 @@ class C_Board:
 
     def __init__(self, index):
         self.index = index
-        self.map =  self.map[index]
+        self.map = [row[:] for row in self._static_map[index]]
         self.total_food_count = self.count_food(self.map)
         Constants.board_height = len(self.map)
         Constants.board_width = len(self.map[0])

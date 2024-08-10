@@ -41,6 +41,10 @@ class C_Ghost(PG.sprite.Sprite):
         self.to_notChase_switch_timer = 20  # this is the timer for changing ghost state from 'CHASE' to 'NOT_CHASE'
         self.being_chased_timer = 10        # how long ghost will be vulnerable; 'BEING_CHASED'
         self.death_timer = 6                # how long the ghost will remain dead
+
+        # Stop flag
+        self.stop_flag = threading.Event()
+
         self.timer_thread = threading.Thread(target=self.run_timer)
         self.timer_thread.daemon = True
         self.timer_thread.start()
@@ -49,39 +53,80 @@ class C_Ghost(PG.sprite.Sprite):
         self.reached_home_flag = False
         self.reached_home_case_2 = False
 
+    # def run_timer(self):
+    #     small_sleep_interval = 0.1      # This is used in addition with elapsed time to have timer
+    #     while True:
+    #         # Ghost scatter/not chase state
+    #         if self.state == 0:         
+    #             elapsed_time = 0
+    #             while self.state < 2 and elapsed_time < self.to_chase_switch_timer:
+    #                 time.sleep(small_sleep_interval)
+    #                 elapsed_time += small_sleep_interval
+    #             # Checking again if the ghost state is indeed scatter/not chase
+    #             if self.state == 0:
+    #                 self.update_state(1)
+    #         # Ghost chase state
+    #         elif self.state == 1:
+    #             elapsed_time = 0
+    #             while self.state < 2 and elapsed_time < self.to_notChase_switch_timer:
+    #                 time.sleep(small_sleep_interval)
+    #                 elapsed_time += small_sleep_interval
+    #             if self.state == 1:
+    #                 self.update_state(0)
+    #         # Ghost scared/run state
+    #         elif self.state == 2:
+    #             elapsed_time = 0
+    #             while self.state == 2 and elapsed_time < self.being_chased_timer:
+    #                 time.sleep(small_sleep_interval)
+    #                 elapsed_time += small_sleep_interval
+    #             if self.state == 2:
+    #                 self.reached_home_case_2 = False
+    #                 self.update_state(0)
+    #         # Ghost dead state
+    #         elif self.state == 3:
+    #             elapsed_time = 0
+    #             while self.state == 3 and elapsed_time < self.death_timer:
+    #                 time.sleep(small_sleep_interval)
+    #                 elapsed_time += small_sleep_interval
+    #             if self.state == 3:
+    #                 self.spawn_ghost()
+
     def run_timer(self):
-        small_sleep_interval = 0.1      # This is used in addition with elapsed time to have timer
-        while True:
-            # Ghost scatter/not chase state
-            if self.state == 0:         
+        small_sleep_interval = 0.1
+        while not self.stop_flag.is_set():
+            if self.state == 0:
                 elapsed_time = 0
                 while self.state < 2 and elapsed_time < self.to_chase_switch_timer:
+                    if self.stop_flag.is_set():
+                        return
                     time.sleep(small_sleep_interval)
                     elapsed_time += small_sleep_interval
-                # Checking again if the ghost state is indeed scatter/not chase
                 if self.state == 0:
                     self.update_state(1)
-            # Ghost chase state
             elif self.state == 1:
                 elapsed_time = 0
                 while self.state < 2 and elapsed_time < self.to_notChase_switch_timer:
+                    if self.stop_flag.is_set():
+                        return
                     time.sleep(small_sleep_interval)
                     elapsed_time += small_sleep_interval
                 if self.state == 1:
                     self.update_state(0)
-            # Ghost scared/run state
             elif self.state == 2:
                 elapsed_time = 0
                 while self.state == 2 and elapsed_time < self.being_chased_timer:
+                    if self.stop_flag.is_set():
+                        return
                     time.sleep(small_sleep_interval)
                     elapsed_time += small_sleep_interval
                 if self.state == 2:
                     self.reached_home_case_2 = False
                     self.update_state(0)
-            # Ghost dead state
             elif self.state == 3:
                 elapsed_time = 0
                 while self.state == 3 and elapsed_time < self.death_timer:
+                    if self.stop_flag.is_set():
+                        return
                     time.sleep(small_sleep_interval)
                     elapsed_time += small_sleep_interval
                 if self.state == 3:
@@ -267,3 +312,8 @@ class C_Ghost(PG.sprite.Sprite):
             # Loop back to the start of the path if needed
             self.current_path_index = 0
             self.rect.x, self.rect.y = self.smallest_loop_path[self.current_path_index]
+
+
+    def stop_timer(self):
+        self.stop_flag.set()
+        self.timer_thread.join()  # Ensure the thread has finished before proceeding
