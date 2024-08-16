@@ -1,7 +1,6 @@
-from Ghost import C_Ghost
-import Constants
-import HelperFunction
-import random
+from . import Constants
+from . import HelperFunction
+from .Ghost import C_Ghost
 
 class C_Blinky(C_Ghost):
     def __init__(self, board, pacman):

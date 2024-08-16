@@ -1,4 +1,5 @@
-# import pygame
+import sys
+import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -6,8 +7,11 @@ import torch.nn.functional as F
 import numpy as np
 from collections import deque
 import random
-from Game.PacmanGame import PacmanGame
+import pygame as PG
 
+from PacmanGame_Dqn import PacmanGame
+
+import NN_Constants
 
 # Classs for DQN 
 class DQN(nn.Module):
@@ -39,24 +43,26 @@ class ReplayMemory:
     
 
 class Agent:
-    def __init__(self, state_dim, action_dim, memory_size, batch_size, gamma, lr, epsilon, epsilon_decay, epsilon_min):
-        self.state_dim = state_dim
-        self.action_dim = action_dim
+    def __init__(self, state_dim, action_dim, memory_size, batch_size, discount_factor, lr, epsilon, epsilon_decay, epsilon_min):
+        self.state_dim = len(state_dim)
+        self.action_dim = len(action_dim)
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
-        self.gamma = gamma
+        self.discount_factor = discount_factor
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.epsilon_min = epsilon_min
-        self.policy_net = DQN(state_dim, action_dim)
-        self.target_net = DQN(state_dim, action_dim)
+        self.policy_net = DQN(self.state_dim, self.action_dim)
+        self.target_net = DQN(self.state_dim, self.action_dim)
+        # self.policy_net = DQN(len(state_dim), len(action_dim))
+        # self.target_net = DQN(len(state_dim), len(action_dim))
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=lr)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
 
     def select_action(self, state):
         if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_dim)
+            return random.randrange(self.action_dim)           
         else:
             state = torch.FloatTensor(state).unsqueeze(0)
             with torch.no_grad():
@@ -76,7 +82,7 @@ class Agent:
 
         q_values = self.policy_net(state_batch).gather(1, action_batch)
         next_q_values = self.target_net(next_state_batch).max(1)[0].detach()
-        expected_q_values = reward_batch + (1 - done_batch) * self.gamma * next_q_values
+        expected_q_values = reward_batch + (1 - done_batch) * self.discount_factor * next_q_values
 
         loss = F.mse_loss(q_values.squeeze(), expected_q_values)
         self.optimizer.zero_grad()
@@ -98,10 +104,16 @@ def train_dqn(env, agent, num_episodes, target_update):
         total_reward = 0
 
         while not done:
-            action = agent.select_action(state)  # Select action
-            next_state, reward, done = env.step(action)  # Execute action
-            agent.memory.push((state, action, reward, next_state, done))  # Store transition in memory
-            agent.train()  # Train the agent
+            for event in PG.event.get():
+                if event.type == PG.QUIT:
+                    PG.quit()
+                    return
+
+            action = agent.select_action(state)
+            next_state, reward, done = env.step(action)
+            env.display()
+            agent.memory.push((state, action, reward, next_state, done))
+            agent.train()
             state = next_state
             total_reward += reward
 
@@ -115,6 +127,8 @@ def train_dqn(env, agent, num_episodes, target_update):
 env = PacmanGame()
 state_dim = env.get_state_space()  # Define this based on your game
 action_dim = env.get_action_space()  # Define this based on your game
-agent = Agent(state_dim, action_dim, memory_size=10000, batch_size=64, gamma=0.99, lr=0.001, epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01)
+agent = Agent(state_dim, action_dim, memory_size = NN_Constants.MEMORY_SIZE, batch_size = NN_Constants.BATCH_SIZE, 
+              discount_factor = NN_Constants.DISCOUNT_FACTOR, lr = NN_Constants.LEARNING_RATE, 
+              epsilon = NN_Constants.EPSILON, epsilon_decay = NN_Constants.EPSILON_DECAY, epsilon_min = NN_Constants.EPSILON_MIN)
 
 train_dqn(env, agent, num_episodes=500, target_update=10)

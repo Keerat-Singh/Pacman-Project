@@ -1,15 +1,18 @@
 import pygame as PG
-import random
-import Constants
-from Ghost import C_Ghost
-from Pacman import C_Pacman
-import time
-from Board import C_Board
-import HelperFunction
-from Blinky import C_Blinky
-from Clyde import C_Clyde
-from Inky import C_Inky
-from Pinky import C_Pinky
+import sys
+import os
+import numpy as np
+# Add the parent directory to the system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Game import Constants
+from Game import HelperFunction
+from Game.Ghost import C_Ghost
+from Game.Pacman import C_Pacman
+from Game.Board import C_Board
+from Game.Blinky import C_Blinky
+from Game.Clyde import C_Clyde
+from Game.Inky import C_Inky
+from Game.Pinky import C_Pinky
 
 class PacmanGame:
 
@@ -39,6 +42,8 @@ class PacmanGame:
         self.screen = PG.display.set_mode((Constants.screen_width, Constants.screen_height))
         PG.display.set_caption("Pac-Man Game")
 
+        self.display()
+
     # used to reset game
     def reset_game(self):
 
@@ -63,16 +68,54 @@ class PacmanGame:
 
     # Update the game state based on the action
     # Return next_state, reward, done (whether the game is over)
-    def step(self):
-        pass
+    def step(self, action):             # This is the main loop for our dqn 
+        
+        # updating pacman movement info
+        self.pacman_update(action)
+
+        # calculating reward when pacman is interacting with different objects in env
+        reward = self.calculating_reward()
+        # There are some updates that are also handled inside calculating reward function
+
+        # Updating ghost info
+        self.ghost_update()
+
+        # get the state space after updates are done, that is next state space 
+        next_state = self.get_state_space()
+
+        # Checking if the game has been completed or not (that is when game state is not equal to 1)
+        done = False if self.game_state == 1 else True
+
+        return next_state, reward, done
 
     # Return the current state representation
     def get_state_space(self):
-        pass
+        
+        # This should hold the wall/food info
+        board_state = np.array(self.board.map).flatten()
+
+        # Game state info (might be used to check for game end info)
+        game_state = np.array([self.game_state])
+        
+        # Get Pac-Man's position
+        pacman_position = np.array(HelperFunction.current_position(self.pacman))
+        
+        # Get the positions of the ghosts
+        ghost_positions = []
+        for ghost in self.ghosts:
+            ghost_positions.append(HelperFunction.current_position(ghost))
+        ghost_positions = np.array(ghost_positions).flatten()
+        
+        # Combine the board state, Pac-Man's position, and ghost positions into a single state vector
+        state = np.concatenate((board_state, game_state, pacman_position, ghost_positions))
+        return state
 
     # Return a list or array of possible actions
     def get_action_space(self):
-        pass
+        
+        # DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN'] and index 4 is stay
+        action = [0,1,2,3,4]
+        return action
 
 # GAME FUNCTIONS
     # drawing board and dots
@@ -102,46 +145,156 @@ class PacmanGame:
         score_text = font.render(f'Score: {Constants.total_score}', True, Constants.WHITE)
         screen.blit(score_text, (10,10))
 
-    # Title Screen
-    def draw_title_screen(self, screen):
-        screen.fill(Constants.BLACK)
-        title_font = PG.font.Font(None, 72)
-        title_text = title_font.render('Pac-Man', True, Constants.WHITE)
-        start_font = PG.font.Font(None, 36)
-        start_text = start_font.render('Press ENTER to Start', True, Constants.WHITE)
-        
-        screen.blit(title_text, (Constants.screen_width // 2 - title_text.get_width() // 2, Constants.screen_height // 2 - title_text.get_height() // 2 - 100))
-        screen.blit(start_text, (Constants.screen_width // 2 - start_text.get_width() // 2, Constants.screen_height // 2 - start_text.get_height() // 2 - 50))
-
-    # End Screen
-    def draw_end_screen(self, screen, game_condition):
-        screen.fill(Constants.BLACK)
-        end_font = PG.font.Font(None, 72)
-        end_text = end_font.render(game_condition, True, Constants.WHITE)
-        score_font = PG.font.Font(None, 36)
-        score_text = score_font.render(f'Final Score: {Constants.total_score}', True, Constants.WHITE)
-        
-        screen.blit(end_text, (Constants.screen_width // 2 - end_text.get_width() // 2, Constants.screen_height // 2 - end_text.get_height() // 2- 100))
-        screen.blit(score_text, (Constants.screen_width // 2 - score_text.get_width() // 2, Constants.screen_height // 2 - score_text.get_height() // 2 - 50))
-        
-        # Draw Retry button
-        retry_button = PG.Rect(Constants.screen_width // 2 - 100, Constants.screen_height // 2 + 50, 200, 50)
-        PG.draw.rect(screen, Constants.WHITE, retry_button)
-        retry_text = PG.font.Font(None, 36).render('Retry', True, Constants.BLACK)
-        screen.blit(retry_text, (retry_button.x + retry_button.width // 2 - retry_text.get_width() // 2, retry_button.y + retry_button.height // 2 - retry_text.get_height() // 2))
-        
-        # Draw Exit button
-        exit_button = PG.Rect(Constants.screen_width // 2 - 100, Constants.screen_height // 2 + 110, 200, 50)
-        PG.draw.rect(screen, Constants.WHITE, exit_button)
-        exit_text = PG.font.Font(None, 36).render('Exit', True, Constants.BLACK)
-        screen.blit(exit_text, (exit_button.x + exit_button.width // 2 - exit_text.get_width() // 2, exit_button.y + exit_button.height // 2 - exit_text.get_height() // 2))
-        
-        return retry_button, exit_button
-
     # Updating game state
     def update_game_state(self, game_state):
         self.game_state = game_state
+
+    # Calling all display functions from here
+    def display(self):
+
+        self.screen.fill(Constants.BLACK)
+        # Draw the board
+        self.draw_board(self.screen, self.board)
+        # Displaying score
+        self.display_score(self.screen)
+        # Draw Pacman
+        self.pacman.draw(self.screen)
+        # Draw ghosts; this will later be for each single ghost differently
+        for ghost in self.ghosts:
+            ghost.draw(self.screen)
+
+        PG.display.flip()
+
+        self.clock.tick(Constants.FPS)    
  
+    # Updating pacman movement info -- without any self.frame_counter
+    def pacman_update(self, action):
+        
+        self.pacman.frame_counter += 1
+        if self.pacman.frame_counter >= Constants.MOVE_DELAY:
+            self.pacman.frame_counter = 0
+
+            new_x, new_y = self.pacman.rect.x, self.pacman.rect.y
+            # DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN'] and index 4 is stay
+            if action == 0:  # LEFT
+                new_x -= 1
+                self.pacman.direction = 'LEFT'
+            elif action == 1:  # RIGHT
+                new_x += 1
+                self.pacman.direction = 'RIGHT'
+            elif action == 2:  # UP
+                new_y += 1
+                self.pacman.direction = 'UP'
+            elif action == 3:  # DOWN
+                new_y -= 1
+                self.pacman.direction = 'DOWN'
+            elif action == 4:  # STAY
+                pass  # Do nothing
+            
+            # Check if the new position is valid and if it is return the new position
+            if HelperFunction.can_move(self.pacman, new_x, new_y):
+                self.pacman.rect.x = new_x
+                self.pacman.rect.y = new_y
+
+    def calculating_reward(self):
+
+        # reward will range from 0-1
+        reward = 0
+
+        # Check for collisions between Pac-Man and ghosts
+        for ghost in self.ghosts:
+            if HelperFunction.current_position(self.pacman) == HelperFunction.current_position(ghost):
+                # Get ghost current state to check if it can kill pacman or pacman can kill ghost
+                if ghost.current_state() < 2:
+                    # Lose
+                    self.update_game_state(2)
+                    reward -= 1
+                else:
+                    # This will only happen when pacman has eaten the food
+                    ghost.update_state(3)
+                    Constants.total_score += Constants.GHOST_KILL_SCORE
+                    reward += 1
+
+         # Checking for food collision
+        if self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 0:
+            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
+            Constants.total_score += Constants.FOOD_SCORE
+            self.board.total_food_count -= 1
+            reward += 0.2
+        elif self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 8:
+            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
+            Constants.total_score += Constants.POWER_UP_SCORE
+            self.board.total_food_count -= 1
+            reward += 0.5
+            for ghost in self.ghosts:
+                ghost.update_state(2)
+
+        return reward
+
+    def ghost_update(self):
+
+        # TODO need to check if the ghost has threding enabled and need to add below code implementation 
+
+        # self.frame_counter += 1
+        # if self.frame_counter >= Constants.MOVE_DELAY + self.speed_difference:
+        #     self.frame_counter = 0
+
+
+
+        for ghost in self.ghosts:
+            # ghost.update()
+            ghost.goal_pos = ghost.goal_update()
+            # Updating flag info; will always tell us if the ghost is at home location or not
+            ghost.reached_home_flag = True if (ghost.rect.x, ghost.rect.y) == (ghost.initialx, ghost.initialy) else False
+
+            # Movement
+            # Will check for different ghost state and update movement accourdingly
+            match ghost.state:
+                case 0:
+                    # ghost.speed_difference = 1
+                    ghost.random_movement()
+                    
+                case 1:
+
+                    # ghost.speed_difference = 1
+                    ghost_pos = (ghost.rect.x, ghost.rect.y)
+                    # print(f"Current Ghost position: {ghost_pos}")
+                    ghost.path = ghost.astar_helper.find_path(ghost_pos, ghost.goal_pos)
+                    if ghost.path:
+                        next_pos = ghost.path.pop(0)
+                        if HelperFunction.can_move(ghost, next_pos[0], next_pos[1]):
+                            ghost.rect.x = next_pos[0]
+                            ghost.rect.y = next_pos[1]
+
+                case 2:
+
+                    # ghost.speed_difference = 2
+                    ghost_pos = (ghost.rect.x, ghost.rect.y)
+                    pacman_pos = HelperFunction.current_position(ghost.pacman)
+                    initial_pos = (ghost.initialx, ghost.initialy)
+
+                    if ghost.reached_home_flag:
+                        ghost.reached_home_case_2 = True
+
+                    if ghost.reached_home_case_2:
+                        ghost.looping_smallest_path()
+                    else:
+                        if HelperFunction.is_pacman_closer(ghost, pacman_pos, initial_pos):
+                            HelperFunction.run_away_from_pacman(ghost, pacman_pos)
+                        else:
+                            ghost.path = ghost.astar_helper.find_path_avoiding_pacman(ghost_pos, initial_pos, pacman_pos)
+                            if ghost.path:
+                                next_pos = ghost.path.pop(0)
+                                if HelperFunction.can_move(ghost, next_pos[0], next_pos[1]):
+                                    ghost.rect.x = next_pos[0]
+                                    ghost.rect.y = next_pos[1]
+                
+                case 3:
+                    return 'ghost is dead'
+                case _:
+                    return "a new state found"
+
+
 # MAIN LOOP
     def main(self):
 
@@ -252,7 +405,3 @@ class PacmanGame:
 
         PG.quit()
 
-
-
-game = PacmanGame()
-game.main()

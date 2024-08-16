@@ -1,7 +1,6 @@
 import pygame as PG
-import random
-import Constants
-from Player import C_Player
+from . import Constants
+from .Player import C_Player
 
 # Pac-Man class
 class C_Pacman(C_Player):

@@ -1,8 +1,6 @@
 import pygame as PG
-import Constants
-import random
-from Controller import C_Controller
-import HelperFunction
+from . import Constants
+from .Controller import C_Controller
 
 # Player class
 class C_Player(PG.sprite.Sprite):

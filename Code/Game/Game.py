@@ -1,15 +1,12 @@
 import pygame as PG
-import random
-import Constants
-from Ghost import C_Ghost
-from Pacman import C_Pacman
-import time
-from Board import C_Board
-import HelperFunction
-from Blinky import C_Blinky
-from Clyde import C_Clyde
-from Inky import C_Inky
-from Pinky import C_Pinky
+from . import Constants
+from . import HelperFunction
+from .Pacman import C_Pacman
+from .Board import C_Board
+from .Blinky import C_Blinky
+from .Clyde import C_Clyde
+from .Inky import C_Inky
+from .Pinky import C_Pinky
 
 # FUNCTIONS
 # drawing board and dots

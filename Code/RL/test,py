@@ -1,9 +1,11 @@
+import sys
 import os
-import torch
-from torch import nn
-from torchvision import datasets, transforms
-import Game.Constants
-import Constants
+
+# Add the parent directory to the system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Now you can import the constants from the Game folder
+from Game import Constants
 
 
 # device = (
@@ -21,4 +23,9 @@ import Constants
 # print(torch.cuda.get_device_name(0))
 
 print(Constants.SIZE)
-print(Game.Constants.SIZE)
+
+
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

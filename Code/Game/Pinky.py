@@ -1,6 +1,6 @@
-from Ghost import C_Ghost
-import Constants
-import HelperFunction
+from . import Constants
+from . import HelperFunction
+from .Ghost import C_Ghost
 
 class C_Pinky(C_Ghost):
     def __init__(self, board, pacman):

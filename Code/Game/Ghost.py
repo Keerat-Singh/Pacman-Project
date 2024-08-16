@@ -1,12 +1,11 @@
 import pygame as PG
 import random
-import Constants
-from GhostMovement import C_GhostMovement
-import HelperFunction
 import time
 import threading
-import math
 import heapq
+from . import Constants
+from . import HelperFunction
+from .GhostMovement import C_GhostMovement
 
 # Ghost class
 class C_Ghost(PG.sprite.Sprite):
@@ -52,44 +51,6 @@ class C_Ghost(PG.sprite.Sprite):
         # Reached home flag 
         self.reached_home_flag = False
         self.reached_home_case_2 = False
-
-    # def run_timer(self):
-    #     small_sleep_interval = 0.1      # This is used in addition with elapsed time to have timer
-    #     while True:
-    #         # Ghost scatter/not chase state
-    #         if self.state == 0:         
-    #             elapsed_time = 0
-    #             while self.state < 2 and elapsed_time < self.to_chase_switch_timer:
-    #                 time.sleep(small_sleep_interval)
-    #                 elapsed_time += small_sleep_interval
-    #             # Checking again if the ghost state is indeed scatter/not chase
-    #             if self.state == 0:
-    #                 self.update_state(1)
-    #         # Ghost chase state
-    #         elif self.state == 1:
-    #             elapsed_time = 0
-    #             while self.state < 2 and elapsed_time < self.to_notChase_switch_timer:
-    #                 time.sleep(small_sleep_interval)
-    #                 elapsed_time += small_sleep_interval
-    #             if self.state == 1:
-    #                 self.update_state(0)
-    #         # Ghost scared/run state
-    #         elif self.state == 2:
-    #             elapsed_time = 0
-    #             while self.state == 2 and elapsed_time < self.being_chased_timer:
-    #                 time.sleep(small_sleep_interval)
-    #                 elapsed_time += small_sleep_interval
-    #             if self.state == 2:
-    #                 self.reached_home_case_2 = False
-    #                 self.update_state(0)
-    #         # Ghost dead state
-    #         elif self.state == 3:
-    #             elapsed_time = 0
-    #             while self.state == 3 and elapsed_time < self.death_timer:
-    #                 time.sleep(small_sleep_interval)
-    #                 elapsed_time += small_sleep_interval
-    #             if self.state == 3:
-    #                 self.spawn_ghost()
 
     def run_timer(self):
         small_sleep_interval = 0.1
@@ -197,24 +158,6 @@ class C_Ghost(PG.sprite.Sprite):
             # Move to the new position
             self.rect.x = ghost_x
             self.rect.y = ghost_y
-        # else:
-        #     # If movement is blocked, do not change direction
-        #     return
-
-        # # Decide whether to change direction based on a lower probability
-        # if random.random() < 0.1:
-        #     new_direction = random.choice(Constants.DIRECTION)
-            
-        #     # Prevent moving directly back to the previous direction
-        #     if (self.direction == 'LEFT' and new_direction == 'RIGHT') or \
-        #     (self.direction == 'RIGHT' and new_direction == 'LEFT') or \
-        #     (self.direction == 'UP' and new_direction == 'DOWN') or \
-        #     (self.direction == 'DOWN' and new_direction == 'UP'):
-        #         return
-            
-        #     # Update the direction
-        #     self.direction = new_direction
-
 
     def finding_smallest_looping_path(self, initialx, initialy, board):
         goal = (initialx, initialy) 

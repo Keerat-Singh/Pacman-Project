@@ -1,5 +1,4 @@
-import Constants
-import pygame as PG
+from . import Constants
 
 class C_Board:
 

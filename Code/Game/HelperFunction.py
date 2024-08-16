@@ -1,6 +1,6 @@
-import Constants
-import heapq
 import random
+import heapq
+from . import Constants
 
 class AStar:
     

@@ -1,7 +1,5 @@
 import pygame as PG
-import Constants
-import random
-import HelperFunction
+from . import HelperFunction
 
 class C_Controller():
 
