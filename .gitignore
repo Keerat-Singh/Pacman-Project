@@ -154,3 +154,10 @@ cython_debug/
 
 # Old Pacman Code
 Pacman/
+
+# Network architecture
+network_architecture
+network_architecture.png
+
+# Models/Testing
+Model/

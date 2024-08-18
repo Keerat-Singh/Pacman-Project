@@ -4,7 +4,14 @@
 MEMORY_SIZE = 10000
 BATCH_SIZE = 64
 DISCOUNT_FACTOR = 0.99  # value ranges from 0-1 where 0 means agent only cares about immediate rewards and vice versa
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.01
 EPSILON = 1.0
 EPSILON_DECAY = 0.995
 EPSILON_MIN = 0.01
+NUM_EPISODES = 5000
+EPISODE = 50        # Saving a new model after how many episodes
+
+REWARDS = {'Food' : 0.2,
+           'Power Up': 0.5,
+           'Ghost Kill': 3,
+           'Death' : -10}

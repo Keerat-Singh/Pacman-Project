@@ -14,6 +14,8 @@ from Game.Clyde import C_Clyde
 from Game.Inky import C_Inky
 from Game.Pinky import C_Pinky
 
+import NN_Constants
+
 class PacmanGame:
 
 # INITIALIZING GAME
@@ -170,9 +172,9 @@ class PacmanGame:
     # Updating pacman movement info -- without any self.frame_counter
     def pacman_update(self, action):
         
-        self.pacman.frame_counter += 1
-        if self.pacman.frame_counter >= Constants.MOVE_DELAY:
-            self.pacman.frame_counter = 0
+        # self.pacman.frame_counter += 1
+        # if self.pacman.frame_counter >= Constants.MOVE_DELAY:
+        #     self.pacman.frame_counter = 0
 
             new_x, new_y = self.pacman.rect.x, self.pacman.rect.y
             # DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN'] and index 4 is stay
@@ -207,25 +209,25 @@ class PacmanGame:
                 # Get ghost current state to check if it can kill pacman or pacman can kill ghost
                 if ghost.current_state() < 2:
                     # Lose
+                    reward += NN_Constants.REWARDS['Death']
                     self.update_game_state(2)
-                    reward -= 1
                 else:
                     # This will only happen when pacman has eaten the food
                     ghost.update_state(3)
                     Constants.total_score += Constants.GHOST_KILL_SCORE
-                    reward += 1
+                    reward += NN_Constants.REWARDS['Ghost Kill']
 
          # Checking for food collision
         if self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 0:
             self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
             Constants.total_score += Constants.FOOD_SCORE
             self.board.total_food_count -= 1
-            reward += 0.2
+            reward += NN_Constants.REWARDS['Food']
         elif self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 8:
             self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
             Constants.total_score += Constants.POWER_UP_SCORE
             self.board.total_food_count -= 1
-            reward += 0.5
+            reward += NN_Constants.REWARDS['Power Up']
             for ghost in self.ghosts:
                 ghost.update_state(2)
 
@@ -233,7 +235,8 @@ class PacmanGame:
 
     def ghost_update(self):
 
-        # TODO need to check if the ghost has threding enabled and need to add below code implementation 
+        # TODO need to check if the ghost has threding enabled and need to add below code implementation
+        # TODO Ghost food interaction, when ghost are in afraid state and pacman eats food, need to reset the timer for afraid  
 
         # self.frame_counter += 1
         # if self.frame_counter >= Constants.MOVE_DELAY + self.speed_difference:
@@ -293,115 +296,3 @@ class PacmanGame:
                     return 'ghost is dead'
                 case _:
                     return "a new state found"
-
-
-# MAIN LOOP
-    def main(self):
-
-        RUNNING = True
-        while RUNNING:
-
-            # for event in PG.event.get():
-            #     if event.type == PG.QUIT:
-            #         RUNNING = False
-
-            for event in PG.event.get():
-                if event.type == PG.QUIT:
-                    RUNNING = False
-
-                # for endless looping and reseting info
-                elif self.game_state != 1:
-                    self.reset_game()
-                
-                # elif event.type == PG.KEYDOWN:
-                #     if event.key == PG.K_RETURN:  # Press ENTER to start the game
-                #         if self.game_state == 0:
-                #             self.update_game_state(1)  # Switch to play state
-                #         elif self.game_state == 2:
-                #             RUNNING = False  # Exit the game from end screen
-                # elif event.type == PG.MOUSEBUTTONDOWN:
-                #     if self.game_state == 2:
-                #         mouse_pos = event.pos
-                #         if retry_button.collidepoint(mouse_pos):
-                #             # Reseting game info and updating game state
-                #             self.reset_game()
-                #         elif exit_button.collidepoint(mouse_pos):
-                #             RUNNING = False  # Exit the game from end screen
-
-            match self.game_state:
-
-                # Title state
-                case 0:
-                    self.draw_title_screen(self.screen)
-
-                # Play state
-                case 1:
-                    # Updating ghost position/info
-                    self.pacman.update()
-
-                    # Check for collisions between Pac-Man and ghosts
-                    for ghost in self.ghosts:
-                        if HelperFunction.current_position(self.pacman) == HelperFunction.current_position(ghost):
-                            # Get ghost current state to check if it can kill pacman or pacman can kill ghost
-                            if ghost.current_state() < 2:
-                                # Lose
-                                self.update_game_state(2)
-                            else:
-                                # This will only happen when pacman has eaten the food
-                                ghost.update_state(3)
-                                Constants.total_score += Constants.GHOST_KILL_SCORE
-
-                    # Updating ghost position/info
-                    for ghost in self.ghosts:
-                        ghost.update()
-                        
-                    # Checking for food collision
-                    match self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]]:
-                        case 0:
-                            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
-                            Constants.total_score += Constants.FOOD_SCORE
-                            self.board.total_food_count -= 1
-                        case 8:
-                            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
-                            Constants.total_score += Constants.POWER_UP_SCORE
-                            self.board.total_food_count -= 1
-                            for ghost in self.ghosts:
-                                ghost.update_state(2)
-                    
-                    # If you have eaten food/power up -- win condition
-                    if self.board.total_food_count == 0:
-                        # Win
-                        self.update_game_state(2)
-
-                    self.screen.fill(Constants.BLACK)
-
-                    # Draw the board
-                    self.draw_board(self.screen, self.board)
-
-                    # Displaying score
-                    self.display_score(self.screen)
-
-                    # Draw Pacman
-                    self.pacman.draw(self.screen)
-
-                    # Draw ghosts; this will later be for each single ghost differently
-                    for ghost in self.ghosts:
-                        ghost.draw(self.screen)
-                
-                # End screen state
-                case 2:
-                    if self.board.total_food_count == 0:
-                        game_condition = "Game Won"
-                    else:
-                        game_condition = "Game Over"
-                    retry_button, exit_button = self.draw_end_screen(self.screen, game_condition)
-                
-                case _:
-                    return "ERROE: Out of bounds game state"
-                
-            PG.display.flip()
-
-            self.clock.tick(Constants.FPS)
-
-        PG.quit()
-
