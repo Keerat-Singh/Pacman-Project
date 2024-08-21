@@ -62,7 +62,7 @@ class Agent:
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         self.total_reward = []
-        self.episode_reward = []     # This will keep track of rewards for previous NN_Constants.EPISODE
+        self.episode_reward = 0     # This will keep track of rewards for previous NN_Constants.EPISODE
         self.loss = []
         self.q_values = []
            
@@ -78,6 +78,8 @@ class Agent:
     def train(self):
         if len(self.memory) < self.batch_size:
             return
+        
+        # print(len(self.memory))
 
         batch = self.memory.sample(self.batch_size)
         state_batch = torch.FloatTensor(np.array([x[0] for x in batch])).to(self.device)
@@ -97,15 +99,25 @@ class Agent:
         loss.backward()
         self.optimizer.step()
 
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+        # if self.epsilon > self.epsilon_min:
+        #     # print("How many times if this running??")
+        #     self.epsilon *= self.epsilon_decay
+        
+        # test_print(self.epsilon, self.epsilon_decay, self.episode_reward, loss, q_values)
 
     def update_target_net(self):
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
 
-def train_dqn(env, agent, episode_count, num_episodes, target_update):
+def test_print(epsilon, epsilon_decay, episode_reward, loss, q_values):
+    print('Epsilon: ', epsilon)
+    # print('Epsilon Decay: ', epsilon_decay)
+    # print('Episode Reward: ', episode_reward)
+    # print('Loss: ', loss)
+    # print('Q Values: ', q_values)
 
+
+def train_dqn(env, agent, episode_count, num_episodes, target_update):
 
     for episode in range(episode_count, num_episodes):
         env.reset_game()  # Reset environment and get initial state
@@ -126,8 +138,10 @@ def train_dqn(env, agent, episode_count, num_episodes, target_update):
             agent.train()
             state = next_state
             current_episode_reward += reward
-            agent.total_reward.append(reward)
-            agent.episode_reward.append(reward)
+
+        # Decay epsilon after each episode
+        if agent.epsilon > agent.epsilon_min:
+            agent.epsilon *= agent.epsilon_decay
 
         if episode % target_update == 0:
             agent.update_target_net()
@@ -135,10 +149,11 @@ def train_dqn(env, agent, episode_count, num_episodes, target_update):
         # Saving model after some episodes have been passed
         if episode % NN_Constants.EPISODE == 0:
             model_name = "Model_at_episode_" + str(episode) + '.pth'
-            save_model(agent, model_name, episode_count)
-            agent.episode_reward = []
+            agent.total_reward.append(current_episode_reward)
+            agent.episode_reward = current_episode_reward
+            save_model(agent, model_name, episode)
 
-        print(f"Episode {episode}, Total Reward: {current_episode_reward}")
+        print(f"Episode {episode}, Total Reward: {current_episode_reward}, Epsilon: {agent.epsilon}")
 
 # Showing network architecture 
 def network_architecture(state_dim, action_dim):
@@ -153,7 +168,7 @@ def network_architecture(state_dim, action_dim):
 
 # Saving the model
 def save_model(agent, filename, episode_count):
-    model_path = os.path.join('Model', filename)
+    model_path = os.path.join('Model/New', filename)
     torch.save({        
         'episode_count': episode_count,
         'policy_net_state_dict': agent.policy_net.state_dict(),
@@ -168,10 +183,10 @@ def save_model(agent, filename, episode_count):
 
 # Loading the model
 def load_model(agent, filename, env):
-    model_path = os.path.join('Model', filename)
+    model_path = os.path.join('Model/New', filename)
     state_dim = env.get_state_space()
     action_dim = env.get_action_space()
-    agent = Agent(state_dim, action_dim, memory_size=NN_Constants.MEMORY_SIZE, batch_size=NN_Constants.BATCH_SIZE, 
+    agent = Agent(state_dim, action_dim, memory_size= 10000, batch_size=NN_Constants.BATCH_SIZE, 
             discount_factor=NN_Constants.DISCOUNT_FACTOR, lr=NN_Constants.LEARNING_RATE, 
             epsilon=NN_Constants.EPSILON, epsilon_decay=NN_Constants.EPSILON_DECAY, epsilon_min=NN_Constants.EPSILON_MIN, 
             )
@@ -199,6 +214,7 @@ def load_model(agent, filename, env):
 
 # Main working
 agent = None
+# Will update model name to continue training
 model_name = "Model_at_episode_0.pth"
 env = PacmanGame()
 agent, episode_count = load_model(agent, model_name, env)

@@ -104,12 +104,16 @@ class PacmanGame:
         
         # Get the positions of the ghosts
         ghost_positions = []
+        # ghost current states
+        ghost_state = []
         for ghost in self.ghosts:
             ghost_positions.append(HelperFunction.current_position(ghost))
+            ghost_state.append(ghost.state)
         ghost_positions = np.array(ghost_positions).flatten()
+        ghost_state = np.array(ghost_state).flatten()
         
-        # Combine the board state, Pac-Man's position, and ghost positions into a single state vector
-        state = np.concatenate((board_state, game_state, pacman_position, ghost_positions))
+        # Combine the board state, Pac-Man's position, ghost positions and ghost state into a single state vector
+        state = np.concatenate((board_state, game_state, pacman_position, ghost_positions, ghost_state))
         return state
 
     # Return a list or array of possible actions

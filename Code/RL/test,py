@@ -1,23 +1,122 @@
-import torch
+import pygame as PG
+import sys
+import os
+import numpy as np
+# Add the parent directory to the system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Game import Constants
+from Game import HelperFunction
+from Game.Ghost import C_Ghost
+from Game.Pacman import C_Pacman
+from Game.Board import C_Board
+from Game.Blinky import C_Blinky
+from Game.Clyde import C_Clyde
+from Game.Inky import C_Inky
+from Game.Pinky import C_Pinky
 
-# Path to your model file
-model_path = 'Model/Model_at_episode_0'
+import NN_Constants
 
-# Load the file to inspect its contents
-model_data = torch.load(model_path, map_location='cpu')
+class PacmanGame:
 
-# Print the keys of the dictionary
-print("Keys in the pickle file:", model_data.keys())
+# INITIALIZING GAME
+    def __init__(self):
 
-# Print the contents of the dictionary
-for key, value in model_data.items():
-    print(f"Key: {key}, Value: {value}")
+        # Initializing
+        PG.init()
+        self.clock = PG.time.Clock()
 
-# agent = None
-# model_name = "pacman_dqn_interrupted.pth"
-# env = PacmanGame()
-# agent = load_model(agent, model_name, env)
+        # Game State
+        # Updated to start the game directly instead of going to the main screen
+        self.game_state = 1
 
-# checkpoint = torch.load(model_path, map_location='cpu')  # Ensure compatibility
-# # agent.policy_net.load_state_dict(checkpoint['model_state_dict'])
-# episode_count = checkpoint['episode_count']
+        # Initializing game objects
+        self.board = C_Board(Constants.MAP_INDEX)
+        self.pacman = C_Pacman(self.board)
+        self.blinky = C_Blinky(self.board, self.pacman)
+        self.clyde = C_Clyde(self.board, self.pacman)
+        self.inky = C_Inky(self.board, self.pacman, self.blinky)
+        self.pinky = C_Pinky(self.board, self.pacman)
+        self.ghosts = [self.blinky, self.clyde, self.inky, self.pinky]
+        self.ghosts = self.ghosts[:Constants.NUMBER_OF_GHOST]
+        Constants.total_score = 0
+
+        # # Screen setup-- Constants.screen_width, Constants.screen_height these values are set after board has been initialized
+        # self.screen = PG.display.set_mode((Constants.screen_width, Constants.screen_height))
+        # PG.display.set_caption("Pac-Man Game")
+
+        # self.display()
+
+    # used to reset game
+    def reset_game(self):
+
+        # Killling threads
+        for ghost in self.ghosts:
+            ghost.stop_timer()
+        
+        self.board = C_Board(Constants.MAP_INDEX)
+        self.pacman = C_Pacman(self.board)
+        self.blinky = C_Blinky(self.board, self.pacman)
+        self.clyde = C_Clyde(self.board, self.pacman)
+        self.inky = C_Inky(self.board, self.pacman, self.blinky)
+        self.pinky = C_Pinky(self.board, self.pacman)
+        self.ghosts = [self.blinky, self.clyde, self.inky, self.pinky]
+        self.ghosts = self.ghosts[:Constants.NUMBER_OF_GHOST]
+        Constants.total_score = 0
+
+        # updaing game state
+        self.update_game_state(1)
+
+# DQN FUNCTIONS
+
+    # Update the game state based on the action
+    # Return next_state, reward, done (whether the game is over)
+    def step(self, action):             # This is the main loop for our dqn 
+        
+        # updating pacman movement info
+        self.pacman_update(action)
+
+        # calculating reward when pacman is interacting with different objects in env
+        reward = self.calculating_reward()
+        # There are some updates that are also handled inside calculating reward function
+
+        # Updating ghost info
+        self.ghost_update()
+
+        # get the state space after updates are done, that is next state space 
+        next_state = self.get_state_space()
+
+        # Checking if the game has been completed or not (that is when game state is not equal to 1)
+        done = False if self.game_state == 1 else True
+
+        return next_state, reward, done
+
+    # Return the current state representation
+    def get_state_space(self):
+        
+        # This should hold the wall/food info
+        board_state = np.array(self.board.map).flatten()
+
+        # Game state info (might be used to check for game end info)
+        game_state = np.array([self.game_state])
+        
+        # Get Pac-Man's position
+        pacman_position = np.array(HelperFunction.current_position(self.pacman))
+        
+        # Get the positions of the ghosts
+        ghost_positions = []
+        # ghost current states
+        ghost_state = []
+        for ghost in self.ghosts:
+            ghost_positions.append(HelperFunction.current_position(ghost))
+            ghost_state.append(ghost.state)
+        ghost_positions = np.array(ghost_positions).flatten()
+        ghost_state = np.array(ghost_state).flatten()
+        
+        # Combine the board state, Pac-Man's position, ghost positions and ghost state into a single state vector
+        state = np.concatenate((board_state, game_state, pacman_position, ghost_positions, ghost_state))
+        print(np.concatenate((game_state, pacman_position, ghost_positions, ghost_state)))
+        return state
+    
+
+test = PacmanGame()
+test.get_state_space()
