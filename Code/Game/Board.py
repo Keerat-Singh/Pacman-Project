@@ -42,6 +42,7 @@ class C_Board:
         self.index = index
         self.map = [row[:] for row in self._static_map[index]]
         self.total_food_count = self.count_food(self.map)
+        self.INITIAL_TOTAL_FOOD = self.total_food_count
         Constants.board_height = len(self.map)
         Constants.board_width = len(self.map[0])
         Constants.screen_height = Constants.board_height*Constants.SIZE

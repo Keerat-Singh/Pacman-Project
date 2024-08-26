@@ -120,7 +120,7 @@ class PacmanGame:
     def get_action_space(self):
         
         # DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN'] and index 4 is stay
-        action = [0,1,2,3,4]
+        action = [0,1,2,3]
         return action
 
 # GAME FUNCTIONS
@@ -191,11 +191,9 @@ class PacmanGame:
             elif action == 2:  # UP
                 new_y += 1
                 self.pacman.direction = 'UP'
-            elif action == 3:  # DOWN
+            else:  # (action == 3) DOWN
                 new_y -= 1
                 self.pacman.direction = 'DOWN'
-            elif action == 4:  # STAY
-                pass  # Do nothing
             
             # Check if the new position is valid and if it is return the new position
             if HelperFunction.can_move(self.pacman, new_x, new_y):
@@ -226,12 +224,12 @@ class PacmanGame:
             self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
             Constants.total_score += Constants.FOOD_SCORE
             self.board.total_food_count -= 1
-            reward += NN_Constants.REWARDS['Food']
+            reward += NN_Constants.REWARDS['Food'] + (self.board.INITIAL_TOTAL_FOOD - self.board.total_food_count)//100
         elif self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 8:
             self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
             Constants.total_score += Constants.POWER_UP_SCORE
             self.board.total_food_count -= 1
-            reward += NN_Constants.REWARDS['Power Up']
+            reward += NN_Constants.REWARDS['Power Up'] + (self.board.INITIAL_TOTAL_FOOD - self.board.total_food_count)//100
             for ghost in self.ghosts:
                 ghost.update_state(2)
 
