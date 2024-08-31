@@ -132,8 +132,8 @@ class PacmanGame:
                 if cell == 1:
                     color = Constants.BLUE       
                     PG.draw.rect(screen, color, PG.Rect(x * Constants.BOARD_SIZE, y * Constants.BOARD_SIZE, Constants.BOARD_SIZE, Constants.BOARD_SIZE))
-                # '0' is dot
-                elif cell == 0:
+                # '3' is dot
+                elif cell == 3:
                     color = Constants.YELLOW
                     PG.draw.circle(screen, color, (x * Constants.BOARD_SIZE + Constants.SIZE//2, y * Constants.BOARD_SIZE + Constants.SIZE//2), Constants.BOARD_SIZE // 4)
                 # '8' is power up
@@ -220,13 +220,13 @@ class PacmanGame:
                     reward += NN_Constants.REWARDS['Ghost Kill']
 
          # Checking for food collision
-        if self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 0:
-            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
+        if self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 3:
+            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 0
             Constants.total_score += Constants.FOOD_SCORE
             self.board.total_food_count -= 1
             reward += NN_Constants.REWARDS['Food'] + (self.board.INITIAL_TOTAL_FOOD - self.board.total_food_count)//100
         elif self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 8:
-            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 9
+            self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 0
             Constants.total_score += Constants.POWER_UP_SCORE
             self.board.total_food_count -= 1
             reward += NN_Constants.REWARDS['Power Up'] + (self.board.INITIAL_TOTAL_FOOD - self.board.total_food_count)//100

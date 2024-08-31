@@ -12,25 +12,31 @@ from PacmanGame import PacmanGame
 import NN_Constants
 from Memory import ReplayMemory
 
-# torch.serialization.add_safe_globals([ReplayMemory])
+# we define are dqn algo with the following formula:
+"""
+Q(s,a) ← Q(s,a)+ alpha[reward + discount_factor * maxQ(s',a') - Q(s,a)]
+where: maxQ(s',a') means the action that maximizes Q value in the next state s' 
+ """
+# Q(s,a): Q value for a current state 's' for current action 'a'
+# alpha is learning rate
+# reward is the reward received after taking action a
+# s' is the next state 
+# a' is the next action
+
+
 
 # Classs for DQN 
 class DQN(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(DQN, self).__init__()
-        # print(f"Input Dim: {input_dim}")
-        self.fc1 = nn.Linear(input_dim, 128)
-        self.fc2 = nn.Linear(128, 128)
-        # self.fc3 = nn.Dropout(0.2)
+        self.fc1 = nn.Linear(input_dim, 512)
+        self.fc2 = nn.Linear(512, 128)
         self.fc3 = nn.Linear(128, output_dim)
-        # self.fc4 = nn.Linear(128, output_dim)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        # x = F.relu(self.fc3(x))
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
         x = self.fc3(x)
-        # x = self.fc4(x)
         return x
     
 
@@ -62,7 +68,6 @@ class Agent:
             state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
             with torch.no_grad():
                 q_values = self.policy_net(state)
-            # return np.argmax(q_values.cpu().data.numpy())
             return np.argmax(q_values.cpu().data.numpy()).item()
 
     def train(self):
@@ -141,6 +146,7 @@ def train_dqn(env, agent, episode_count, num_episodes, target_update):
             save_model(agent, model_name, episode)
 
         print(f"Episode {episode}, Total Reward: {current_episode_reward}, Epsilon: {agent.epsilon}")
+        print(state)
 
 # Showing network architecture 
 def network_architecture(state_dim, action_dim):
@@ -206,7 +212,7 @@ def load_model(agent, filename, env):
 # Main working
 agent = None
 # Will update model name to continue training
-model_name = "Model_at_episode_1200.pth"
+model_name = "Model_at_episode_5800.pth"
 env = PacmanGame()
 agent, episode_count = load_model(agent, model_name, env)
 

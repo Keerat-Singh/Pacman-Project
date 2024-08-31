@@ -17,8 +17,8 @@ def draw_board(screen, board):
             if cell == 1:
                 color = Constants.BLUE       
                 PG.draw.rect(screen, color, PG.Rect(x * Constants.BOARD_SIZE, y * Constants.BOARD_SIZE, Constants.BOARD_SIZE, Constants.BOARD_SIZE))
-            # '0' is dot
-            elif cell == 0:
+            # '3' is dot
+            elif cell == 3:
                 color = Constants.YELLOW
                 PG.draw.circle(screen, color, (x * Constants.BOARD_SIZE + Constants.SIZE//2, y * Constants.BOARD_SIZE + Constants.SIZE//2), Constants.BOARD_SIZE // 4)
             # '8' is power up
@@ -179,12 +179,12 @@ def main():
                     
                 # Checking for food collision
                 match board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]]:
-                    case 0:
-                        board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]] = 9
+                    case 3:
+                        board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]] = 0
                         Constants.total_score += Constants.FOOD_SCORE
                         board.total_food_count -= 1
                     case 8:
-                        board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]] = 9
+                        board.map[HelperFunction.current_position(pacman)[1]][HelperFunction.current_position(pacman)[0]] = 0
                         Constants.total_score += Constants.POWER_UP_SCORE
                         board.total_food_count -= 1
                         for ghost in ghosts:

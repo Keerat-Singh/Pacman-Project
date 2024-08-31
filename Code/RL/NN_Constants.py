@@ -8,7 +8,7 @@ LEARNING_RATE = 0.001
 EPSILON = 1.0
 EPSILON_DECAY = 0.996
 EPSILON_MIN = 0.01
-NUM_EPISODES = 10000
+NUM_EPISODES = 20000
 EPISODE = 200        # Saving a new model after how many episodes
 
 REWARDS = {'Food' : 0.2,

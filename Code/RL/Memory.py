@@ -29,3 +29,11 @@ class ReplayMemory:
 
     def load(self, memory):
         self.memory = memory
+
+
+
+# Need to define a Prioritized/experienced memory buffer
+class PrioritizedReplayMemory:
+
+    def __init__(self) -> None:
+        pass

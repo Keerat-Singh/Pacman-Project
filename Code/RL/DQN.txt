@@ -6,3 +6,4 @@ Have made multiple changes on DQN alog:
 4. Updated episode to 15000 to see how far the agent can understand. But, it agent was stuck and not learning properly
 5. Update epsilon implementation, batch size and Replay Memory buffer size
 6. Agent was still not learning enough, so removed dropout layer as it might be causing underfitting 
+7. Updated my DQN network backward propogation to leaky relu instead of relu and also changed fc1 hidden layer output to 512 instead of 128 
