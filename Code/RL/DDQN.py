@@ -11,6 +11,7 @@ import pygame as PG
 from PacmanGame import PacmanGame
 import NN_Constants
 import Memory
+import pandas as pd
 
 # torch.serialization.add_safe_globals([ReplayMemory])
 
@@ -20,12 +21,14 @@ class DDQN(nn.Module):
         super(DDQN, self).__init__()
         self.fc1 = nn.Linear(input_dim, 512)
         self.fc2 = nn.Linear(512, 128)
-        self.fc3 = nn.Linear(128, output_dim)
+        self.fc3 = nn.Linear(128, 32)
+        self.fc4 = nn.Linear(32, output_dim)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         return x
     
 
@@ -93,7 +96,7 @@ class Agent:
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
 
-def train_dqn(env, agent, episode_count, num_episodes, target_update):
+def train_dqn(env, agent, episode_count, num_episodes, target_update, df, df_path):
     
     for episode in range(episode_count, num_episodes):
         env.reset_game()  # Reset environment and get initial state
@@ -115,12 +118,16 @@ def train_dqn(env, agent, episode_count, num_episodes, target_update):
             state = next_state
             current_episode_reward += reward
 
-        # Saving last reward from each episode
+        # Saving total reward from each episode
         agent.total_reward.append(current_episode_reward)
 
-        # Decay epsilon after each episode
-        if agent.epsilon > agent.epsilon_min:
-            agent.epsilon *= agent.epsilon_decay
+        # Saving csv
+        if episode in df['Episode'].values:
+            df.loc[df['Episode'] == episode, ['Reward', 'Epsilon']] = [current_episode_reward, agent.epsilon]
+        else:
+            new_row = pd.DataFrame({'Episode': [episode], 'Reward': [current_episode_reward], 'Epsilon': [agent.epsilon]})
+            df = pd.concat([df, new_row], ignore_index=True)
+        df.to_csv(df_path, index=False)
 
         if episode % target_update == 0:
             agent.update_target_net()
@@ -132,6 +139,10 @@ def train_dqn(env, agent, episode_count, num_episodes, target_update):
             save_model(agent, subdir, model_name, episode)
 
         print(f"Episode {episode}, Total Reward: {current_episode_reward}, Epsilon: {agent.epsilon}")
+        
+        # Decay epsilon after each episode
+        if agent.epsilon > agent.epsilon_min:
+            agent.epsilon *= agent.epsilon_decay
 
 # Showing network architecture 
 def network_architecture(state_dim, action_dim):
@@ -207,5 +218,19 @@ model_name = "Model_at_episode_0.pth"
 env = PacmanGame()
 agent, episode_count = load_model(agent, subdir, model_name, env)
 
-# network_architecture(agent.state_dim, agent.action_dim)
-train_dqn(env, agent, episode_count, num_episodes = NN_Constants.NUM_EPISODES, target_update = 10)
+# Checking and loading the episode/reward df csv file
+df_path = os.path.join('Model/DDQN', subdir, "reward.csv")
+# Check if the CSV file exists
+if not os.path.isfile(df_path):
+    # If it doesn't exist, create an empty DataFrame or with specific columns, and save it
+    df = pd.DataFrame(columns=["Episode", "Reward", "Epsilon"])  # Define your columns
+    df.to_csv(df_path, index=False)
+    print(f"Created new CSV file at {df_path}")
+else:
+    # If it exists, read the CSV file
+    df = pd.read_csv(df_path)
+    print(f"Loaded existing CSV file from {df_path}")
+
+
+network_architecture(agent.state_dim, agent.action_dim)
+train_dqn(env, agent, episode_count, num_episodes = NN_Constants.NUM_EPISODES, target_update = 10, df= df, df_path = df_path)
