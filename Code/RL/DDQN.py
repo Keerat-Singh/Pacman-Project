@@ -138,7 +138,7 @@ def train_dqn(env, agent, episode_count, num_episodes, target_update, df, df_pat
             agent.episode_reward = current_episode_reward
             save_model(agent, subdir, model_name, episode)
 
-        print(f"Episode {episode}, Total Reward: {current_episode_reward}, Epsilon: {agent.epsilon}")
+        print(f"Episode {episode}, Total Reward: {current_episode_reward}, Epsilon: {agent.epsilon}, Memory: {len(agent.memory)}")
         
         # Decay epsilon after each episode
         if agent.epsilon > agent.epsilon_min:
@@ -213,10 +213,13 @@ def load_model(agent, subdir, filename, env):
 # Main working
 agent = None
 # Will update model name to continue training
-subdir = 'First'
-model_name = "Model_at_episode_0.pth"
+subdir = 'Second'
+model_name = "Model_at_episode_4000.pth"
 env = PacmanGame()
 agent, episode_count = load_model(agent, subdir, model_name, env)
+
+# Reseting epsilon value again
+# agent.epsilon = NN_Constants.EPSILON
 
 # Checking and loading the episode/reward df csv file
 df_path = os.path.join('Model/DDQN', subdir, "reward.csv")

@@ -72,15 +72,18 @@ class PacmanGame:
     # Return next_state, reward, done (whether the game is over)
     def step(self, action):             # This is the main loop for our dqn 
         
-        # updating pacman movement info
-        self.pacman_update(action)
+        # To keep track of reward for current action
+        reward = 0
 
-        # calculating reward when pacman is interacting with different objects in env
-        reward = self.calculating_reward()
-        # There are some updates that are also handled inside calculating reward function
+        # updating pacman movement info
+        reward += self.pacman_update(action)
 
         # Updating ghost info
         self.ghost_update()
+
+        # calculating reward when pacman is interacting with different objects in env
+        reward += self.calculating_reward()
+        # There are some updates that are also handled inside calculating reward function
 
         # get the state space after updates are done, that is next state space 
         next_state = self.get_state_space()
@@ -119,7 +122,7 @@ class PacmanGame:
     # Return a list or array of possible actions
     def get_action_space(self):
         
-        # DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN'] and index 4 is stay
+        # DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN']
         action = [0,1,2,3]
         return action
 
@@ -179,7 +182,7 @@ class PacmanGame:
         # self.pacman.frame_counter += 1
         # if self.pacman.frame_counter >= Constants.MOVE_DELAY:
         #     self.pacman.frame_counter = 0
-
+            reward = 0
             new_x, new_y = self.pacman.rect.x, self.pacman.rect.y
             # DIRECTION = ['LEFT', 'RIGHT', 'UP', 'DOWN'] and index 4 is stay
             if action == 0:  # LEFT
@@ -199,10 +202,13 @@ class PacmanGame:
             if HelperFunction.can_move(self.pacman, new_x, new_y):
                 self.pacman.rect.x = new_x
                 self.pacman.rect.y = new_y
+            # Added a penaly when pacman is trying to move but can not due to Donald Trump, :V
+            else:
+                reward = -1
+            return reward
 
     def calculating_reward(self):
 
-        # reward will range from 0-1
         reward = 0
 
         # Check for collisions between Pac-Man and ghosts
@@ -224,12 +230,12 @@ class PacmanGame:
             self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 0
             Constants.total_score += Constants.FOOD_SCORE
             self.board.total_food_count -= 1
-            reward += NN_Constants.REWARDS['Food'] + (self.board.INITIAL_TOTAL_FOOD - self.board.total_food_count)//100
+            reward += NN_Constants.REWARDS['Food'] + Constants.total_score/1000
         elif self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] == 8:
             self.board.map[HelperFunction.current_position(self.pacman)[1]][HelperFunction.current_position(self.pacman)[0]] = 0
             Constants.total_score += Constants.POWER_UP_SCORE
             self.board.total_food_count -= 1
-            reward += NN_Constants.REWARDS['Power Up'] + (self.board.INITIAL_TOTAL_FOOD - self.board.total_food_count)//100
+            reward += NN_Constants.REWARDS['Power Up'] + Constants.total_score/1000
             for ghost in self.ghosts:
                 ghost.update_state(2)
 
