@@ -1,0 +1,72 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+
+
+class NoisyLinear(nn.Module):
+    # Noisy layer for Noisy Networks (Rainbow)
+    def __init__(self, in_features, out_features, std_init=0.5):
+        super(NoisyLinear, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.std_init = std_init
+
+        self.weight_mu = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.weight_sigma = nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.register_buffer('weight_epsilon', torch.FloatTensor(out_features, in_features))
+
+        self.bias_mu = nn.Parameter(torch.FloatTensor(out_features))
+        self.bias_sigma = nn.Parameter(torch.FloatTensor(out_features))
+        self.register_buffer('bias_epsilon', torch.FloatTensor(out_features))
+
+        self.reset_parameters()
+        self.reset_noise()
+
+    def reset_parameters(self):
+        mu_range = 1 / self.in_features
+        self.weight_mu.data.uniform_(-mu_range, mu_range)
+        self.weight_sigma.data.fill_(self.std_init / (self.in_features ** 0.5))
+        self.bias_mu.data.uniform_(-mu_range, mu_range)
+        self.bias_sigma.data.fill_(self.std_init / (self.in_features ** 0.5))
+
+
+    def reset_noise(self):
+        epsilon_in = self.scale_noise(self.in_features)  # Noise for input features
+        epsilon_out = self.scale_noise(self.out_features)  # Noise for output features
+
+        # Outer product for weight noise and directly apply epsilon for bias noise
+        self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))  # Apply outer product noise to weights
+        self.bias_epsilon.copy_(epsilon_out)  # Apply noise to biases
+
+        print(f"Weight Noise: {self.weight_epsilon}")
+        print(f"Bias Noise: {self.bias_epsilon}")
+
+
+    def forward(self, x):
+        # if self.training:
+        #     epsilon_in = torch.randn_like(self.weight_epsilon)
+        #     epsilon_out = torch.randn_like(self.bias_epsilon)
+        # else:
+        #     weight = self.weight_mu
+        #     bias = self.bias_mu
+
+        weight = self.weight_mu + self.weight_sigma * self.weight_epsilon
+        bias = self.bias_mu + self.bias_sigma * self.bias_epsilon
+        return F.linear(x, weight, bias)
+    
+    @staticmethod
+    def scale_noise(size):
+        x = torch.randn(size)  # Generate Gaussian noise
+        return x.sign().mul(x.abs().sqrt())  # Apply factorized noise
+    
+
+def test_noisy_layer():
+    noisy_layer = NoisyLinear(128, 128)
+    x = torch.randn(1, 128)
+    output1 = noisy_layer(x)
+    noisy_layer.reset_noise()
+    output2 = noisy_layer(x)
+    assert not torch.equal(output1, output2), "Outputs should differ due to noise."
+    
+test_noisy_layer()
