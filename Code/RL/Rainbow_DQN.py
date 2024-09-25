@@ -15,7 +15,8 @@ import Memory
 import math
 from typing import Dict
 import pandas as pd
-from math import floor, ceil
+import time
+# from math import floor, ceil
 
 # torch.serialization.add_safe_globals([ReplayMemory])
 
@@ -54,7 +55,6 @@ class NoisyLinear(nn.Module):
         # Outer product for weight noise and directly apply epsilon for bias noise
         self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))  # Apply outer product noise to weights
         self.bias_epsilon.copy_(epsilon_out)  # Apply noise to biases
-
 
     def forward(self, x):
         # if self.training:
@@ -149,7 +149,7 @@ class Agent:
         self.beta = NN_Constants.BETA
         self.prioritized_epsilon = NN_Constants.PRIORITIZED_EPSILON
         self.prioritized_memory = Memory.PrioritizedReplayBuffer(obs_dim= self.state_dim, size= NN_Constants.MEMORY_SIZE,
-                                                                 batch_size= NN_Constants.BATCH_SIZE, alpha= 0.6,
+                                                                 batch_size= NN_Constants.BATCH_SIZE, alpha= 0.2,
                                                                  discount_factor= discount_factor, n_step= 1)
 
         # N step memory buffer
@@ -222,7 +222,7 @@ class Agent:
     def train(self):
         """Update the model by gradient descent."""
         # PER needs beta to calculate weights
-        samples = self.prioritized_memory.sample_batch(self.beta)
+        samples = self.prioritized_memory.sample_batch(self.beta)   
         weights = torch.FloatTensor(samples["weights"].reshape(-1, 1)).to(self.device)
         indices = samples["indices"]
         
@@ -233,7 +233,7 @@ class Agent:
         loss = torch.mean(elementwise_loss * weights)
         
         # N-step Learning loss
-        # we are gonna combine 1-step loss and n-step loss so as to
+        # we are gonna combine 1-step loss and Sn-step loss so as to
         # prevent high-variance. The original rainbow employs n-step loss only.
         if self.use_n_step:
             discount_factor = self.discount_factor ** self.n_step
@@ -268,17 +268,19 @@ class Agent:
 
 
     # Training our agent
-    def train_dqn(self, num_episodes:int, df, df_path, target_update:int = 10, episode_count:int = 1):
+    def train_dqn(self, num_episodes:int, df, df_path, target_update:int = 10):
         """Train the agent."""
         # self.is_test = False
         
         update_cnt = 0
-        for episode in range(episode_count, num_episodes):
+        for episode in range(self.episode, num_episodes):
             self.env.reset_game()      # Reset environment and get initial state
             state = self.env.get_state_space()
             done = False
             current_episode_reward = 0.0
             current_episode_loss = 0.0
+            current_score = 0
+            start_time = time.time()
 
             while not done:
                 for event in PG.event.get():
@@ -291,37 +293,47 @@ class Agent:
                 next_state, reward, done = self.step(action= action)
                 self.env.display()
                 state = next_state
-                current_episode_reward += reward
+                current_episode_reward += reward            
+                current_score = self.env.current_score()
 
                 # PER: increase beta
                 fraction = min(episode / num_episodes, 1.0)
                 self.beta = self.beta + fraction * (1.0 - self.beta)
 
-            # if training is ready
-            if len(self.prioritized_memory) >= self.batch_size:
-                current_episode_loss = self.train()
-                update_cnt += 1
-                
-                # if hard update is needed
-                """This will only start once our memory has >= states than batch_size"""
-                if update_cnt % target_update == 0:
-                    # self._target_hard_update()
-                    self.update_target_net()
+                # if training is ready
+                if len(self.prioritized_memory) >= self.batch_size:
+                    current_episode_loss = self.train()
+                    update_cnt += 1
+                    
+                    # if hard update is needed
+                    """This will only start once our memory has >= states than batch_size"""
+                    if update_cnt % target_update == 0:
+                        # self._target_hard_update()
+                        self.update_target_net()
 
-            # Saving csv
-            if episode in df['Episode'].values:
-                df.loc[df['Episode'] == episode, ['Reward', 'Loss']] = [current_episode_reward, current_episode_loss]
-            else:
-                new_row = pd.DataFrame({'Episode': [episode], 'Reward': [current_episode_reward], 'Loss': [current_episode_loss]})
-                df = pd.concat([df, new_row], ignore_index=True)
-            df.to_csv(df_path, index=False)
-            
+
+            # Calculating time
+            end_time = time.time()
+            current_time = end_time - start_time
+
             # Saving model after some episodes have been passed
             if episode % NN_Constants.EPISODE == 0:
                 model_name = "Model_at_episode_" + str(episode) + '.pth'
                 self.episode_reward = current_episode_reward
                 save_model(self, subdir, model_name, episode)
 
+            # Saving csv
+            if episode in df['Episode'].values:
+                df.loc[df['Episode'] == episode, ['Reward', 'Loss', 'Score', 'Time Taken']] = [current_episode_reward, current_episode_loss, current_score, current_time]
+            else:
+                new_row = pd.DataFrame({'Episode': [episode], 'Reward': [current_episode_reward], 'Loss': [current_episode_loss],
+                                        'Score' : [current_score], 'Time Taken' : [current_time]})
+                df = pd.concat([df, new_row], ignore_index=True)
+            df.to_csv(df_path, index=False)
+            
+
+            print(f"Episode {episode}, Total Reward: {current_episode_reward}, Loss: {current_episode_loss}, Score: {current_score}, Time Taken: {current_time}")
+        
             """"Current Epsisode Loss value will be update once we have higher memory than stated batch size"""
 
 
@@ -373,7 +385,7 @@ def network_architecture(state_dim, support, policy_net):
 
 # Saving the model
 def save_model(agent, subdir, filename, episode_count):
-    model_path = os.path.join('Model/DDQN', subdir, filename)
+    model_path = os.path.join('Model/Rainbow', subdir, filename)
     dir_path = os.path.dirname(model_path)
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -381,7 +393,18 @@ def save_model(agent, subdir, filename, episode_count):
     torch.save({
         'policy_net_state_dict': agent.policy_net.state_dict(),
         'target_net_state_dict': agent.target_net.state_dict(),
-        'episode' : episode_count
+        'episode' : episode_count,
+        'prioritized_memory' : agent.prioritized_memory,
+        'n_step_memory' : agent.n_step_memory,
+        'discount_factor' : agent.discount_factor,
+        'v_min' : agent.v_min,
+        'v_max' : agent.v_max,
+        'atom_size' : agent.atom_size,
+        'support' : agent.support,
+        'n_step' : agent.n_step,
+        'optimizer' : agent.optimizer,
+        'is_test' : agent.is_test,
+        'beta' : agent.beta
         }, model_path)
     print(f"Model saved to {model_path}")
 
@@ -400,21 +423,31 @@ def load_model(agent, subdir, filename):
         checkpoint = torch.load(model_path, map_location='cuda', weights_only= False)
         agent.policy_net.load_state_dict(checkpoint['policy_net_state_dict'])
         agent.target_net.load_state_dict(checkpoint['target_net_state_dict'])
-        agent.episode = checkpoint.episode
+        agent.episode = checkpoint['episode']
+        agent.prioritized_memory = checkpoint['prioritized_memory']
+        agent.n_step_memory = checkpoint['n_step_memory']
+        agent.discount_factor = checkpoint['discount_factor']
+        agent.v_min = checkpoint['v_min']
+        agent.v_max = checkpoint['v_max']
+        agent.atom_size = checkpoint['atom_size']
+        agent.support = checkpoint['support']
+        agent.n_step = checkpoint['n_step']
+        agent.optimizer = checkpoint['optimizer']
+        agent.is_test = checkpoint['is_test']
+        agent.beta = checkpoint['beta']
         print(f"Loaded model: {model_path}")
     else:
-        episode_count = 0
         print(f"No model found at: {model_path}. Initializing new agent.")
 
-    return agent, episode_count
+    return agent
 
 
 # Main working
 agent = None
 # Will update model name to continue training
-subdir = 'First'
+subdir = 'Second'
 model_name = "Model_at_episode_0.pth"
-agent, episode_count = load_model(agent, subdir, model_name)
+agent = load_model(agent, subdir, model_name)
 
 
 # Checking and loading the episode/reward df csv file
@@ -422,7 +455,7 @@ df_path = os.path.join('Model/Rainbow', subdir, "reward.csv")
 # Check if the CSV file exists
 if not os.path.isfile(df_path):
     # If it doesn't exist, create an empty DataFrame or with specific columns, and save it
-    df = pd.DataFrame(columns=["Episode", "Reward", "Loss"])  # Define your columns
+    df = pd.DataFrame(columns=["Episode", "Reward", "Loss", "Score", "Time Taken"])  # Define your columns
     df.to_csv(df_path, index=False)
     print(f"Created new CSV file at {df_path}")
 else:
@@ -431,5 +464,5 @@ else:
     print(f"Loaded existing CSV file from {df_path}")
 
 
-# network_architecture(agent.state_dim, agent.support, agent.policy_net)
-agent.train_dqn(episode_count= episode_count, num_episodes= NN_Constants.NUM_EPISODES, df_path= df_path, df= df)
+network_architecture(agent.state_dim, agent.support, agent.policy_net)
+agent.train_dqn(num_episodes= NN_Constants.NUM_EPISODES, df_path= df_path, df= df)

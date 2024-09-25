@@ -1,6 +1,6 @@
 # NN Constants
-# MEMORY_SIZE = 100000
-MEMORY_SIZE = 131072
+MEMORY_SIZE = 100000
+# MEMORY_SIZE = 131072
 BATCH_SIZE = 128
 DISCOUNT_FACTOR = 0.99  # value ranges from 0-1 where 0 means agent only cares about immediate rewards and vice versa
 LEARNING_RATE = 0.001
@@ -14,7 +14,7 @@ EPISODE = 200        # Saving a new model after how many episodes
 """The main difference between C51 and DQN is that rather than simply predicting the Q-value for each state-action pair, 
     C51 predicts a histogram model for the probability distribution of the Q-value"""
 ATOM_SIZE: int = 51
-V_MIN: int = -15     # Minimum possible reward in an episode
+V_MIN: int = -25     # Minimum possible reward in an episode
 V_MAX: int = 400     # Maximum possible reward in an episode TODO this could break as we don't know the exact value of max reward for an episode yet
 
 # n_step
@@ -41,7 +41,8 @@ it ranges from [0,1], where 1 indicates PER uses full prioritization, where tran
 
 
 # Pacman game reward
-REWARDS = {'Food' : 0.2,
-           'Power Up': 0.5,
-           'Ghost Kill': 3,
-           'Death' : -15}
+REWARDS = {'Food' : 0.4,
+           'Power Up': 0.8,
+           'Ghost Kill': 6,
+           'Death' : -15,
+           'Wall Collision' : -0.0005}

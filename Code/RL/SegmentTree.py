@@ -16,7 +16,8 @@ class SegmentTree():
         self.operation = operation
         self.neutral_value = neutral_value
         # self.tree = [neutral_value] * (2 * capacity)  # Initialize with neutral values
-        self.tree = [neutral_value for _ in range(2 * capacity)]  # Initialize with neutral values
+        # self.tree = [neutral_value for _ in range(2 * capacity)]  # Initialize with neutral values
+        self.tree = list(np.full(2 * self.capacity, neutral_value))  # Initialize with neutral values
 
     def _operate_helper(self, start: int, end: int, node: int, node_start: int, node_end: int) -> float:
         """Returns result of operation in segment."""
@@ -51,16 +52,12 @@ class SegmentTree():
             idx (int): The index to set the value at.
             value (float): The value to set.
         """
-
-         # Ensure index is valid
-        if not 0 <= idx < self.capacity:
-            raise IndexError(f"Index {idx} is out of bounds for capacity {self.capacity}")
         
         # Leaf index in the tree
         idx += self.capacity
         self.tree[idx] = value
-        idx //= 2
 
+        idx //= 2
         # Update parent nodes
         while idx >= 1:
             self.tree[idx] = self.operation(self.tree[2 * idx], self.tree[2 * idx + 1])
@@ -73,9 +70,9 @@ class SegmentTree():
         Args:
             idx (int): The index to retrieve.
         """
-        assert (0 <= idx < self.capacity), "IDX is going negative or out of bounds"
-        # print(f"IDX: {idx}")
-        return self.tree[self.capacity + idx]
+
+        # idx += self.capacity
+        return self.tree[idx]
 
 
 # Creating sum and min segment tree
@@ -97,18 +94,21 @@ class SumSegmentTree():
     def retrieve(self, upperbound: float):
         """Find the highest index `i` about upper bound in the tree"""
         idx = 1
-        # print(f"Capacity: {self.capacity}")
-        while 2*idx < self.capacity:
+        while idx < self.capacity:
             left = 2 * idx
             right = left + 1
+
+            # if left < (self.capacity):
+
             if self.tree[left] > upperbound:
-                idx = left  # Move to the right child
+                idx = left  # Move to the left child
             else:
                 upperbound -= self.tree[left]
                 idx = right
-            
-            # print(f"IDX value after loop iteration: {idx}")
-        return 2*idx - self.capacity  # Convert tree index to array index
+
+            # else:
+            #     idx = left
+        return idx - self.capacity # Convert tree index to array index
     
 
 class MinSegmentTree:

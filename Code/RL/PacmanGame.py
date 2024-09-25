@@ -204,7 +204,7 @@ class PacmanGame:
                 self.pacman.rect.y = new_y
             # Added a penaly when pacman is trying to move but can not due to Donald Trump, :V
             else:
-                reward = -1
+                reward = NN_Constants.REWARDS['Wall Collision']
             return reward
 
     def calculating_reward(self):
@@ -304,3 +304,7 @@ class PacmanGame:
                     return 'ghost is dead'
                 case _:
                     return "a new state found"
+               
+    # Current score 
+    def current_score(self):
+        return Constants.total_score

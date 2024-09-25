@@ -136,9 +136,6 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         while tree_capacity < self.max_size:
             tree_capacity *= 2
 
-        print(f"Tree Capacity: {tree_capacity} and Max Capacity given: {self.max_size}")
-        print(n_step)
-        print(self.n_step)
         self.sum_tree = SumSegmentTree(tree_capacity)
         self.min_tree = MinSegmentTree(tree_capacity)
         
@@ -157,20 +154,19 @@ class PrioritizedReplayBuffer(ReplayBuffer):
         """Sample a batch of experiences."""
         
         indices = self._sample_proportional()
-        
+
         obs = self.obs_buf[indices]
         next_obs = self.next_obs_buf[indices]
         acts = self.acts_buf[indices]
         rews = self.rews_buf[indices]
         done = self.done_buf[indices]
-        print(f"Getting divide by zero encountered for beta value: {beta}")
         weights = np.array([self._calculate_weight(i, beta) for i in indices])
         
         return dict(obs= obs,next_obs=next_obs,acts=acts,rews=rews,done=done,weights=weights,indices=indices)
         
     def update_priorities(self, indices: List[int], priorities: np.ndarray):
         """Update priorities of sampled transitions."""
-        assert len(indices) == len(priorities)
+        # assert len(indices) == len(priorities)
 
         for idx, priority in zip(indices, priorities):
             # assert priority > 0
@@ -184,14 +180,13 @@ class PrioritizedReplayBuffer(ReplayBuffer):
     def _sample_proportional(self) -> List[int]:
         """Sample indices based on proportions."""
         indices = []
-        p_total = self.sum_tree.sum(0, len(self) - 1)
+        p_total = self.sum_tree.sum(0, len(self)-1)
         segment = p_total / self.batch_size
         
         for i in range(self.batch_size):
             a = segment * i
             b = segment * (i + 1)
             upperbound = random.uniform(a, b)
-            # print(f'Inside _sample_proportional; Upperbound value: {upperbound}, a: {a}, b: {b}, segment: {segment}, p_total: {p_total}')
             idx = self.sum_tree.retrieve(upperbound)
             indices.append(idx)
         
@@ -200,6 +195,7 @@ class PrioritizedReplayBuffer(ReplayBuffer):
     def _calculate_weight(self, idx: int, beta: float):
         """Calculate the weight of the experience at idx."""
         # get max weight
+        idx += self.sum_tree.capacity   # To access leaf nodes 
         p_min = self.min_tree.min() / self.sum_tree.sum()
         max_weight = (p_min * len(self)) ** (-beta)
         

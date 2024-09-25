@@ -214,7 +214,7 @@ def load_model(agent, subdir, filename, env):
 agent = None
 # Will update model name to continue training
 subdir = 'Second'
-model_name = "Model_at_episode_4000.pth"
+model_name = "Model_at_episode_4200.pth"
 env = PacmanGame()
 agent, episode_count = load_model(agent, subdir, model_name, env)
 
